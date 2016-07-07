@@ -40,18 +40,10 @@ import com.yahoo.sketches.memory.NativeMemory;
  * @author Kevin Lang
  * @author Lee Rhodes
  */
-class HeapDoublesSketch extends DoublesSketch {
+class HeapDoublesSketch extends AbstractDoublesSketch {
 
   private static final short ARRAY_OF_DOUBLES_SERDE_ID = new ArrayOfDoublesSerDe().getId();
-  /**
-   * The smallest value ever seen in the stream.
-   */
-  double minValue_;
 
-  /**
-   * The largest value ever seen in the stream.
-   */
-  double maxValue_;
 
   /**
    * In the initial on-heap version, equals combinedBuffer_.length.
@@ -110,7 +102,12 @@ class HeapDoublesSketch extends DoublesSketch {
     hqs.maxValue_ = java.lang.Double.NEGATIVE_INFINITY;
     return hqs;
   }
-  
+
+  @Override
+  public double[] getQuantiles(int evenlySpaced) {
+    return super.getQuantiles(evenlySpaced);
+  }
+
   /**
    * Heapifies the given srcMem, which must be a Memory image of a DoublesSketch
    * @param srcMem a Memory image of a sketch.
