@@ -63,6 +63,12 @@ public class NativeDoublesSketch extends DoublesSketch
     }
 
     @Override
+    public byte[] toByteArray(boolean sort)
+    {
+        return new byte[0];
+    }
+
+    @Override
     public String toString(boolean sketchSummary, boolean dataDetail) {
         return null;
     }
@@ -70,6 +76,12 @@ public class NativeDoublesSketch extends DoublesSketch
     @Override
     public DoublesSketch downSample(int smallerK) {
         return null;
+    }
+
+    @Override
+    public void putMemory(Memory dstMem, boolean sort)
+    {
+
     }
 
     @Override

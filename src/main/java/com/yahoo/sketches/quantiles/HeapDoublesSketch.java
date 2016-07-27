@@ -5,35 +5,16 @@
 
 package com.yahoo.sketches.quantiles;
 
-import static com.yahoo.sketches.quantiles.PreambleUtil.EMPTY_FLAG_MASK;
-import static com.yahoo.sketches.quantiles.PreambleUtil.MAX_DOUBLE;
-import static com.yahoo.sketches.quantiles.PreambleUtil.MIN_DOUBLE;
-import static com.yahoo.sketches.quantiles.PreambleUtil.N_LONG;
-import static com.yahoo.sketches.quantiles.PreambleUtil.SER_VER;
-import static com.yahoo.sketches.quantiles.PreambleUtil.extractFamilyID;
-import static com.yahoo.sketches.quantiles.PreambleUtil.extractFlags;
-import static com.yahoo.sketches.quantiles.PreambleUtil.extractK;
-import static com.yahoo.sketches.quantiles.PreambleUtil.extractPreLongs;
-import static com.yahoo.sketches.quantiles.PreambleUtil.extractSerDeId;
-import static com.yahoo.sketches.quantiles.PreambleUtil.extractSerVer;
-import static com.yahoo.sketches.quantiles.PreambleUtil.insertFamilyID;
-import static com.yahoo.sketches.quantiles.PreambleUtil.insertFlags;
-import static com.yahoo.sketches.quantiles.PreambleUtil.insertK;
-import static com.yahoo.sketches.quantiles.PreambleUtil.insertPreLongs;
-import static com.yahoo.sketches.quantiles.PreambleUtil.insertSerDeId;
-import static com.yahoo.sketches.quantiles.PreambleUtil.insertSerVer;
-import static com.yahoo.sketches.quantiles.Util.computeBaseBufferItems;
-import static com.yahoo.sketches.quantiles.Util.computeBitPattern;
-import static com.yahoo.sketches.quantiles.Util.computeCombBufItemCapacity;
-import static com.yahoo.sketches.quantiles.Util.computeRetainedItems;
-
-import java.util.Arrays;
-
 import com.yahoo.sketches.ArrayOfDoublesSerDe;
 import com.yahoo.sketches.Family;
 import com.yahoo.sketches.SketchesArgumentException;
 import com.yahoo.sketches.memory.Memory;
 import com.yahoo.sketches.memory.NativeMemory;
+
+import java.util.Arrays;
+
+import static com.yahoo.sketches.quantiles.PreambleUtil.*;
+import static com.yahoo.sketches.quantiles.Util.*;
 
 /**
  * Implements the DoublesSketch on the Java heap.
@@ -41,40 +22,9 @@ import com.yahoo.sketches.memory.NativeMemory;
  * @author Kevin Lang
  * @author Lee Rhodes
  */
-final class HeapDoublesSketch extends DoublesSketch {
+final class HeapDoublesSketch extends AbstractDoublesSketch {
 
   private static final short ARRAY_OF_DOUBLES_SERDE_ID = new ArrayOfDoublesSerDe().getId();
-  /**
-   * The smallest value ever seen in the stream.
-   */
-  double minValue_;
-
-  /**
-   * The largest value ever seen in the stream.
-   */
-  double maxValue_;
-
-  /**
-   * In the initial on-heap version, equals combinedBuffer_.length.
-   * May differ in later versions that grow space more aggressively.
-   * Also, in the off-heap version, combinedBuffer_ won't even be a java array,
-   * so it won't know its own length.
-   */
-  int combinedBufferItemCapacity_;
-
-  /**
-   * Number of samples currently in base buffer.
-   * 
-   * <p>Count = N % (2*K)
-   */
-  int baseBufferCount_;
-
-  /**
-   * Active levels expressed as a bit pattern.
-   * 
-   * <p>Pattern = N / (2 * K)
-   */
-  long bitPattern_;
 
   /**
    * This single array contains the base buffer plus all levels some of which may not be used.
