@@ -5,14 +5,14 @@
 
 package com.yahoo.sketches.quantiles;
 
-import static com.yahoo.sketches.Util.LS;
-import static com.yahoo.sketches.Util.checkIfPowerOf2;
-import static java.lang.System.arraycopy;
+import com.yahoo.sketches.SketchesArgumentException;
+import com.yahoo.sketches.memory.Memory;
 
 import java.util.Arrays;
 
-import com.yahoo.sketches.SketchesArgumentException;
-import com.yahoo.sketches.memory.Memory;
+import static com.yahoo.sketches.Util.LS;
+import static com.yahoo.sketches.Util.checkIfPowerOf2;
+import static java.lang.System.arraycopy;
 
 /**
  * Static methods that support the doubles quantiles algorithms.
@@ -84,7 +84,7 @@ final class DoublesUtil {
    * Called when the base buffer has just acquired 2*k elements.
    * @param sketch the given quantiles sketch
    */
-  static void processFullBaseBuffer(final HeapDoublesSketch sketch) {
+  static void processFullBaseBuffer(final AbstractDoublesSketch sketch) {
     final int bbCount = sketch.getBaseBufferCount();
     final long n = sketch.getN();
     assert bbCount == 2 * sketch.getK(); // internal consistency check
@@ -109,7 +109,7 @@ final class DoublesUtil {
       final int startingLevel,
       final double[] sizeKBuf, final int sizeKStart,
       final double[] size2KBuf, final int size2KStart,
-      final boolean doUpdateVersion, final HeapDoublesSketch sketch
+      final boolean doUpdateVersion, final AbstractDoublesSketch sketch
     ) { // else doMergeIntoVersion
     final double[] levelsArr = sketch.getCombinedBuffer();
     final int k = sketch.getK();
@@ -146,7 +146,7 @@ final class DoublesUtil {
     sketch.bitPattern_ = bitPattern + (1L << startingLevel);
   }
 
-  static void maybeGrowLevels(final long newN, final HeapDoublesSketch sketch) { // important: newN might not equal n_
+  static void maybeGrowLevels(final long newN, final AbstractDoublesSketch sketch) { // important: newN might not equal n_
     final int k = sketch.getK();
     final int numLevelsNeeded = Util.computeNumLevelsNeeded(k, newN);
     if (numLevelsNeeded == 0) {
@@ -160,18 +160,17 @@ final class DoublesUtil {
       return;
     }
     // copies base buffer plus old levels
-    sketch.combinedBuffer_ = Arrays.copyOf(sketch.getCombinedBuffer(), spaceNeeded); 
+    sketch.buffer_grow(spaceNeeded);
     sketch.combinedBufferItemCapacity_ = spaceNeeded;
   }
 
-  static void growBaseBuffer(final HeapDoublesSketch sketch) {
-    final double[] baseBuffer = sketch.getCombinedBuffer();
+  static void growBaseBuffer(final AbstractDoublesSketch sketch) {
     final int oldSize = sketch.getCombinedBufferItemCapacity();
     final int k = sketch.getK();
     assert oldSize < 2 * k;
     final int newSize = Math.max(Math.min(2 * k, 2 * oldSize), 1);
     sketch.combinedBufferItemCapacity_ = newSize;
-    sketch.combinedBuffer_ = Arrays.copyOf(baseBuffer, newSize);
+    sketch.buffer_grow(newSize);
   }
 
   /**

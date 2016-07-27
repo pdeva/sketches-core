@@ -41,4 +41,26 @@ public abstract class AbstractDoublesSketch extends DoublesSketch {
     AbstractDoublesSketch(int k) {
         super(k);
     }
+
+    @Override
+    public void update(double dataItem) {
+        // this method only uses the base buffer part of the combined buffer
+        if (Double.isNaN(dataItem)) return;
+
+        if (dataItem > maxValue_) { maxValue_ = dataItem; }
+        if (dataItem < minValue_) { minValue_ = dataItem; }
+
+        if (baseBufferCount_ + 1 > combinedBufferItemCapacity_) {
+            DoublesUtil.growBaseBuffer(this);
+        }
+        buffer_setDataItem(baseBufferCount_++, dataItem);
+        n_++;
+        if (baseBufferCount_ == 2 * k_) {
+            DoublesUtil.processFullBaseBuffer(this);
+        }
+    }
+
+    protected abstract void buffer_setDataItem(int index, double dataItem);
+
+    protected abstract void buffer_grow(int newSize);
 }

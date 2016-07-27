@@ -147,23 +147,17 @@ final class HeapDoublesSketch extends AbstractDoublesSketch {
     qsCopy.combinedBuffer_ = Arrays.copyOf(combBuf, combBuf.length);
     return qsCopy;
   }
-  
+
   @Override
-  public void update(double dataItem) {
-    // this method only uses the base buffer part of the combined buffer
-    if (Double.isNaN(dataItem)) return;
+  protected void buffer_setDataItem(int index, double dataItem)
+  {
+      combinedBuffer_[index] = dataItem;
+  }
 
-    if (dataItem > maxValue_) { maxValue_ = dataItem; }
-    if (dataItem < minValue_) { minValue_ = dataItem; }
-
-    if (baseBufferCount_ + 1 > combinedBufferItemCapacity_) {
-      DoublesUtil.growBaseBuffer(this);
-    } 
-    combinedBuffer_[baseBufferCount_++] = dataItem;
-    n_++;
-    if (baseBufferCount_ == 2 * k_) {
-      DoublesUtil.processFullBaseBuffer(this);
-    }
+  @Override
+  protected void buffer_grow(int newSize)
+  {
+      this.combinedBuffer_ = Arrays.copyOf(combinedBuffer_, newSize);
   }
 
   @Override
