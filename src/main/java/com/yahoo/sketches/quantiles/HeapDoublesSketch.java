@@ -222,20 +222,6 @@ final class HeapDoublesSketch extends AbstractDoublesSketch {
     return result;
   }
 
-  @Override
-  public int getK() { 
-    return k_; 
-  }
-
-  @Override
-  public double getMinValue() {
-    return minValue_;
-  }
-
-  @Override
-  public double getMaxValue() {
-    return maxValue_;
-  }
 
   @Override
   public void reset() {

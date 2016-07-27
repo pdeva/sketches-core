@@ -60,6 +60,22 @@ public abstract class AbstractDoublesSketch extends DoublesSketch {
         }
     }
 
+    @Override
+    public int getK() {
+        return k_;
+    }
+
+    @Override
+    public double getMinValue() {
+        return minValue_;
+    }
+
+    @Override
+    public double getMaxValue() {
+        return maxValue_;
+    }
+
+
     protected abstract void buffer_setDataItem(int index, double dataItem);
 
     protected abstract void buffer_grow(int newSize);
