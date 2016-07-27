@@ -2,9 +2,20 @@
  * Copyright 2015-16, Yahoo! Inc.
  * Licensed under the terms of the Apache License 2.0. See LICENSE file at the project root for terms.
  */
+
 package com.yahoo.sketches.theta;
 
-import static com.yahoo.sketches.theta.PreambleUtil.*;
+import static com.yahoo.sketches.Util.checkSeedHashes;
+import static com.yahoo.sketches.Util.computeSeedHash;
+import static com.yahoo.sketches.theta.PreambleUtil.COMPACT_FLAG_MASK;
+import static com.yahoo.sketches.theta.PreambleUtil.EMPTY_FLAG_MASK;
+import static com.yahoo.sketches.theta.PreambleUtil.PREAMBLE_LONGS_BYTE;
+import static com.yahoo.sketches.theta.PreambleUtil.READ_ONLY_FLAG_MASK;
+import static com.yahoo.sketches.theta.PreambleUtil.RETAINED_ENTRIES_INT;
+import static com.yahoo.sketches.theta.PreambleUtil.THETA_LONG;
+import static com.yahoo.sketches.theta.PreambleUtil.extractFlags;
+import static com.yahoo.sketches.theta.PreambleUtil.extractPreLongs;
+import static com.yahoo.sketches.theta.PreambleUtil.extractSeedHash;
 
 import com.yahoo.sketches.memory.Memory;
 
@@ -18,7 +29,7 @@ import com.yahoo.sketches.memory.Memory;
  * 
  * @author Lee Rhodes
  */
-class DirectCompactSketch extends CompactSketch {
+final class DirectCompactSketch extends CompactSketch {
   private Memory mem_;
   private int preLongs_; //1, 2, or 3
   
@@ -30,16 +41,19 @@ class DirectCompactSketch extends CompactSketch {
    * Wraps the given Memory, which must be a SerVer 3, unordered, Compact Sketch
    * @param srcMem <a href="{@docRoot}/resources/dictionary.html#mem">See Memory</a>
    * @param pre0 the first 8 bytes of the preamble
+   * @param seed <a href="{@docRoot}/resources/dictionary.html#seed">See Update Hash Seed</a>. 
    * @return this sketch
    */
-  static DirectCompactSketch wrapInstance(Memory srcMem, long pre0) {
+  static DirectCompactSketch wrapInstance(Memory srcMem, long pre0, long seed) {
     int preLongs = extractPreLongs(pre0);
     int flags = extractFlags(pre0);
     boolean empty = (flags & EMPTY_FLAG_MASK) > 0;
-    short seedHash = (short) extractSeedHash(pre0);
+    short memSeedHash = (short) extractSeedHash(pre0);
+    short computedSeedHash = computeSeedHash(seed);
+    checkSeedHashes(memSeedHash, computedSeedHash);
     int curCount = (preLongs > 1) ? srcMem.getInt(RETAINED_ENTRIES_INT) : 0;
     long thetaLong = (preLongs > 2) ? srcMem.getLong(THETA_LONG) : Long.MAX_VALUE;
-    DirectCompactSketch dcs = new DirectCompactSketch(empty, seedHash, curCount, thetaLong);
+    DirectCompactSketch dcs = new DirectCompactSketch(empty, memSeedHash, curCount, thetaLong);
     dcs.preLongs_ = extractPreLongs(pre0);
     dcs.mem_ = srcMem;
     return dcs;
@@ -56,7 +70,7 @@ class DirectCompactSketch extends CompactSketch {
         sketch.getRetainedEntries(true), //curCount_  set here
         sketch.getThetaLong()            //thetaLong_ set here
         );
-    int emptyBit = isEmpty()? (byte) EMPTY_FLAG_MASK : 0;
+    int emptyBit = isEmpty() ? (byte) EMPTY_FLAG_MASK : 0;
     byte flags = (byte) (emptyBit |  READ_ONLY_FLAG_MASK | COMPACT_FLAG_MASK);
     boolean ordered = false;
     long[] compactCache = 
@@ -77,7 +91,7 @@ class DirectCompactSketch extends CompactSketch {
   DirectCompactSketch(long[] compactCache, boolean empty, short seedHash, int curCount, 
       long thetaLong, Memory dstMem) {
     super(empty, seedHash, curCount, thetaLong);
-    int emptyBit = empty? (byte) EMPTY_FLAG_MASK : 0;
+    int emptyBit = empty ? (byte) EMPTY_FLAG_MASK : 0;
     byte flags = (byte) (emptyBit |  READ_ONLY_FLAG_MASK | COMPACT_FLAG_MASK);
     mem_ = loadCompactMemory(compactCache, empty, seedHash, curCount, thetaLong, dstMem, flags);
   }

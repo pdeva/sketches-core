@@ -18,7 +18,9 @@ import com.yahoo.sketches.theta.Sketch;
  * 
  * @author Kevin Lang
  */
-public class BoundsOnRatiosInThetaSketchedSets {
+public final class BoundsOnRatiosInThetaSketchedSets {
+  
+  private BoundsOnRatiosInThetaSketchedSets() {}
   
   /**
    * Gets the approximate lower bound for B over A based on a 95% confidence interval
@@ -32,7 +34,7 @@ public class BoundsOnRatiosInThetaSketchedSets {
     checkThetas(thetaA, thetaB);
     
     int countB = sketchB.getRetainedEntries(true);
-    int countA = (thetaB == thetaA)? sketchA.getRetainedEntries(true) 
+    int countA = (thetaB == thetaA) ? sketchA.getRetainedEntries(true) 
         : sketchA.getCountLessThanTheta(thetaB);
     
     if (countA <= 0) return 0;
@@ -52,7 +54,7 @@ public class BoundsOnRatiosInThetaSketchedSets {
     checkThetas(thetaA, thetaB);
 
     int countB = sketchB.getRetainedEntries(true);
-    int countA = (thetaB == thetaA)? sketchA.getRetainedEntries(true) 
+    int countA = (thetaB == thetaA) ? sketchA.getRetainedEntries(true) 
         : sketchA.getCountLessThanTheta(thetaB);
     
     if (countA <= 0) return 1.0;
@@ -72,7 +74,7 @@ public class BoundsOnRatiosInThetaSketchedSets {
     checkThetas(thetaA, thetaB);
 
     int countB = sketchB.getRetainedEntries(true);
-    int countA = (thetaB == thetaA)? sketchA.getRetainedEntries(true) 
+    int countA = (thetaB == thetaA) ? sketchA.getRetainedEntries(true) 
         : sketchA.getCountLessThanTheta(thetaB);
     
     if (countA <= 0) return 0.5;

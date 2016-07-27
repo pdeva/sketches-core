@@ -2,6 +2,7 @@
  * Copyright 2015-16, Yahoo! Inc.
  * Licensed under the terms of the Apache License 2.0. See LICENSE file at the project root for terms.
  */
+
 package com.yahoo.sketches.tuple;
 
 import org.testng.annotations.Test;
@@ -30,6 +31,8 @@ public class ArrayOfDoublesUnionTest {
     ArrayOfDoublesUnion union = new ArrayOfDoublesSetOperationBuilder().buildUnion();
     union.update(sketch1);
     union.update(sketch2);
+    int maxBytes = ArrayOfDoublesUnion.getMaxBytes(union.nomEntries_, union.numValues_);
+    Assert.assertEquals(maxBytes, 131104);
     ArrayOfDoublesCompactSketch result = union.getResult();
     Assert.assertEquals(result.getEstimate(), 3.0);
     double[][] values = result.getValues();

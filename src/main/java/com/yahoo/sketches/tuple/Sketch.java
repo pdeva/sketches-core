@@ -36,7 +36,8 @@ public abstract class Sketch<S extends Summary> {
    * Gets the approximate upper error bound given the specified number of Standard Deviations. 
    * This will return getEstimate() if isEmpty() is true.
    * 
-   * @param numStdDev <a href="{@docRoot}/resources/dictionary.html#numStdDev">See Number of Standard Deviations</a>
+   * @param numStdDev 
+   * <a href="{@docRoot}/resources/dictionary.html#numStdDev">See Number of Standard Deviations</a>
    * @return the upper bound.
    */
   public double getUpperBound(final int numStdDev) {
@@ -48,7 +49,8 @@ public abstract class Sketch<S extends Summary> {
    * Gets the approximate lower error bound given the specified number of Standard Deviations.
    * This will return getEstimate() if isEmpty() is true.
    * 
-   * @param numStdDev <a href="{@docRoot}/resources/dictionary.html#numStdDev">See Number of Standard Deviations</a>
+   * @param numStdDev 
+   * <a href="{@docRoot}/resources/dictionary.html#numStdDev">See Number of Standard Deviations</a>
    * @return the lower bound.
    */
   public double getLowerBound(final int numStdDev) {
@@ -98,6 +100,10 @@ public abstract class Sketch<S extends Summary> {
    */
   public abstract byte[] toByteArray();
 
+  /**
+   * Returns a SketchIterator
+   * @return a SketchIterator
+   */
   public SketchIterator<S> iterator() {
     return new SketchIterator<S>(keys_, summaries_);
   }

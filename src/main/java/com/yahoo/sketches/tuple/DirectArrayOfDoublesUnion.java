@@ -15,18 +15,20 @@ import com.yahoo.sketches.memory.Memory;
  * This Memory can be off-heap, which if managed properly will greatly reduce the need for
  * the JVM to perform garbage collection.</p>
  */
-class DirectArrayOfDoublesUnion extends ArrayOfDoublesUnion {
+final class DirectArrayOfDoublesUnion extends ArrayOfDoublesUnion {
 
   private final Memory mem_;
 
   /**
    * Creates an instance of DirectArrayOfDoublesUnion
-   * @param nomEntries Nominal number of entries. Forced to the nearest power of 2 greater than given value.
+   * @param nomEntries Nominal number of entries. Forced to the nearest power of 2 greater than 
+   * given value.
    * @param numValues Number of double values to keep for each key.
    * @param seed <a href="{@docRoot}/resources/dictionary.html#seed">See seed</a>
    * @param dstMem <a href="{@docRoot}/resources/dictionary.html#mem">See Memory</a>
    */
-  DirectArrayOfDoublesUnion(final int nomEntries, final int numValues, final long seed, final Memory dstMem) {
+  DirectArrayOfDoublesUnion(final int nomEntries, final int numValues, final long seed, 
+      final Memory dstMem) {
     super(new DirectArrayOfDoublesQuickSelectSketch(nomEntries, 3, 1f, numValues, seed, dstMem));
     mem_ = dstMem;
   }

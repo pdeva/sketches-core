@@ -6,7 +6,8 @@
 package com.yahoo.sketches.quantiles;
 
 import static com.yahoo.sketches.Family.idToFamily;
-import static com.yahoo.sketches.quantiles.Util.*;
+import static com.yahoo.sketches.quantiles.Util.LS;
+import static com.yahoo.sketches.quantiles.Util.computeRetainedItems;
 
 import java.nio.ByteOrder;
 
@@ -33,7 +34,7 @@ import com.yahoo.sketches.memory.NativeMemory;
  * Long || Start Byte Adr: Common for both DoublesSketch and ItemsSketch
  * Adr: 
  *      ||    7   |    6   |    5   |    4   |    3   |    2   |    1   |     0          |
- *  0   ||------type-------|--------K--------|  Flags | FamID  | SerVer | Preamble_Longs |
+ *  0   ||------SerDeId----|--------K--------|  Flags | FamID  | SerVer | Preamble_Longs |
  *  
  *      ||   15   |   14   |   13   |   12   |   11   |   10   |    9   |     8          |
  *  1   ||-----------------------------------N_LONG--------------------------------------|
@@ -63,7 +64,7 @@ final class PreambleUtil {
   static final int FAMILY_BYTE                = 2;
   static final int FLAGS_BYTE                 = 3;
   static final int K_SHORT                    = 4;  //to 5
-  static final int SER_DE_ID_SHORT          = 6;  //to 7 
+  static final int SER_DE_ID_SHORT            = 6;  //to 7 
   static final int N_LONG                     = 8;  //to 15
   
   //After Preamble:

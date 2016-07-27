@@ -13,7 +13,7 @@ import com.yahoo.sketches.tuple.DoubleSummary.Mode;
  * Factory for DoubleSummary. It supports three modes of operation of DoubleSummary:
  * Sum, Min and Max.
  */
-public class DoubleSummaryFactory implements SummaryFactory<DoubleSummary> {
+public final class DoubleSummaryFactory implements SummaryFactory<DoubleSummary> {
 
   private final DoubleSummary.Mode summaryMode_;
 
@@ -56,10 +56,12 @@ public class DoubleSummaryFactory implements SummaryFactory<DoubleSummary> {
   /**
    * Creates an instance of the DoubleSummaryFactory given a serialized representation
    * @param mem Memory object with serialized DoubleSummaryFactory
-   * @return DeserializedResult object, which contains a DoubleSummaryFactory object and number of bytes read from the Memory
+   * @return DeserializedResult object, which contains a DoubleSummaryFactory object and number of 
+   * bytes read from the Memory
    */
   public static DeserializeResult<DoubleSummaryFactory> fromMemory(final Memory mem) {
-    return new DeserializeResult<DoubleSummaryFactory>(new DoubleSummaryFactory(Mode.values()[mem.getByte(MODE_BYTE)]), SERIALIZED_SIZE_BYTES);
+    return new DeserializeResult<DoubleSummaryFactory>(
+        new DoubleSummaryFactory(Mode.values()[mem.getByte(MODE_BYTE)]), SERIALIZED_SIZE_BYTES);
   }
 
   @Override

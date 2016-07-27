@@ -30,8 +30,9 @@ public class TestUtil {
   }
 
   public static void writeBytesToFile(byte[] bytes, String fileName) throws IOException {
-    FileOutputStream out = new FileOutputStream(new File(fileName));
-    out.write(bytes);
-    out.close();
+    try (FileOutputStream out = new FileOutputStream(new File(fileName))) {
+      out.write(bytes);
+    }
   }
+  
 }

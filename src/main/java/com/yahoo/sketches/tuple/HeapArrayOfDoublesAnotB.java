@@ -5,18 +5,19 @@
 
 package com.yahoo.sketches.tuple;
 
-import java.util.Arrays;
-
-import com.yahoo.sketches.memory.Memory;
-
 import static com.yahoo.sketches.Util.REBUILD_THRESHOLD;
 import static com.yahoo.sketches.Util.ceilingPowerOf2;
+
+import java.util.Arrays;
+
+import com.yahoo.sketches.HashOperations;
+import com.yahoo.sketches.memory.Memory;
 
 /**
  * The on-heap implementation of the set difference operation <i>A and not B</i> for
  * tuple sketches of type ArrayOfDoubles.
  */
-class HeapArrayOfDoublesAnotB extends ArrayOfDoublesAnotB {
+final class HeapArrayOfDoublesAnotB extends ArrayOfDoublesAnotB {
 
   private boolean isEmpty_ = true;
   private long theta_ = Long.MAX_VALUE;
@@ -25,6 +26,7 @@ class HeapArrayOfDoublesAnotB extends ArrayOfDoublesAnotB {
   private int count_;
   private final short seedHash_;
   private final int numValues_;
+  
   /**
    * Creates an instance of HeapArrayOfDoublesAnotB given a custom seed
    * @param numValues Number of double values to keep for each key.
@@ -39,7 +41,7 @@ class HeapArrayOfDoublesAnotB extends ArrayOfDoublesAnotB {
   public void update(final ArrayOfDoublesSketch a, final ArrayOfDoublesSketch b) {
     if (a != null) Util.checkSeedHashes(seedHash_, a.getSeedHash());
     if (b != null) Util.checkSeedHashes(seedHash_, b.getSeedHash());
-    if (a != null) isEmpty_ = a.isEmpty(); // stays this way even if we end up with no entries in the result
+    if (a != null) isEmpty_ = a.isEmpty();//stays this way even if we end up with no result entries
     final long thetaA = a == null ? Long.MAX_VALUE : a.getThetaLong();
     final long thetaB = b == null ? Long.MAX_VALUE : b.getThetaLong();
     theta_ = Math.min(thetaA, thetaB);
@@ -67,7 +69,8 @@ class HeapArrayOfDoublesAnotB extends ArrayOfDoublesAnotB {
 
   @Override
   public ArrayOfDoublesCompactSketch getResult() {
-    if (count_ == 0) return new HeapArrayOfDoublesCompactSketch(null, null, Long.MAX_VALUE, true, numValues_, seedHash_);
+    if (count_ == 0) return new 
+        HeapArrayOfDoublesCompactSketch(null, null, Long.MAX_VALUE, true, numValues_, seedHash_);
     ArrayOfDoublesCompactSketch result = new HeapArrayOfDoublesCompactSketch(
       Arrays.copyOfRange(keys_, 0, count_),
       Arrays.copyOfRange(values_, 0, count_ * numValues_),

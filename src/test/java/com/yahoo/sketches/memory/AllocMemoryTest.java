@@ -5,15 +5,12 @@
 package com.yahoo.sketches.memory;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 
 import org.testng.annotations.Test;
 import com.yahoo.sketches.memory.NativeMemory;
 import com.yahoo.sketches.memory.AllocMemory;
 import static com.yahoo.sketches.hash.MurmurHash3Adaptor.*;
 
-@SuppressWarnings("unused")
 public class AllocMemoryTest {
 
   @Test
@@ -28,7 +25,7 @@ public class AllocMemoryTest {
     println("Add: "+mem1add+", Cap: "+mem1.getCapacity());
     
     //reallocate at twice the size.
-    NativeMemory mem2 = new AllocMemory(mem1, 2*bytes, null);
+    NativeMemory mem2 = new AllocMemory(mem1, 2L * bytes, null);
     long mem2add = mem2.getAddress(0);
     boolean equal = (mem1add == mem2add);
     String eqStr = (equal)? ", EQUAL, " : ", NOT EQUAL, ";
@@ -77,12 +74,6 @@ public class AllocMemoryTest {
    */
   static void println(String s) {
     //System.out.println(s); //disable here
-  }
-  
-  public static void main(String[] args) {
-    AllocMemoryTest amt = new AllocMemoryTest();
-    amt.checkReallocateNativeMemory();
-    
   }
   
 }

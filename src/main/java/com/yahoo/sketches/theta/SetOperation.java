@@ -7,10 +7,11 @@ package com.yahoo.sketches.theta;
 
 import static com.yahoo.sketches.Family.idToFamily;
 import static com.yahoo.sketches.Util.DEFAULT_UPDATE_SEED;
+import static com.yahoo.sketches.Util.MIN_LG_ARR_LONGS;
+import static com.yahoo.sketches.Util.REBUILD_THRESHOLD;
 import static com.yahoo.sketches.Util.ceilingPowerOf2;
 import static com.yahoo.sketches.theta.PreambleUtil.FAMILY_BYTE;
 import static com.yahoo.sketches.theta.PreambleUtil.SER_VER_BYTE;
-import static com.yahoo.sketches.Util.*;
 import static java.lang.Math.max;
 
 import com.yahoo.sketches.Family;
@@ -62,7 +63,7 @@ public abstract class SetOperation {
   public static SetOperation heapify(Memory srcMem, long seed) {
     byte famID = srcMem.getByte(FAMILY_BYTE);
     Family family = idToFamily(famID);
-    switch(family) {
+    switch (family) {
       case UNION : {
         return UnionImpl.heapifyInstance(srcMem, seed);
       }
@@ -70,7 +71,8 @@ public abstract class SetOperation {
         return new HeapIntersection(srcMem, seed);
       }
       default: {
-        throw new SketchesArgumentException("SetOperation cannot heapify family: "+family.toString());
+        throw new SketchesArgumentException("SetOperation cannot heapify family: " 
+            + family.toString());
       }
     }
   }
@@ -102,8 +104,10 @@ public abstract class SetOperation {
     byte famID = srcMem.getByte(FAMILY_BYTE);
     Family family = idToFamily(famID);
     int serVer = srcMem.getByte(SER_VER_BYTE);
-    if (serVer != 3) throw new SketchesArgumentException("SerVer must be 3: "+serVer);
-    switch(family) {
+    if (serVer != 3) {
+      throw new SketchesArgumentException("SerVer must be 3: " + serVer);
+    }
+    switch (family) {
       case UNION : {
         return UnionImpl.wrapInstance(srcMem, seed);
       }
@@ -111,7 +115,7 @@ public abstract class SetOperation {
         return new DirectIntersection(srcMem, seed);
       }
       default:
-        throw new SketchesArgumentException("SetOperation cannot wrap family: "+family.toString());
+        throw new SketchesArgumentException("SetOperation cannot wrap family: " + family.toString());
     }
   }
 
@@ -139,6 +143,10 @@ public abstract class SetOperation {
     return bytes;
   }
   
+  /**
+   * Gets the Family of this SetOperation
+   * @return the Family of this SetOperation
+   */
   public abstract Family getFamily();
   
   //restricted
@@ -161,8 +169,9 @@ public abstract class SetOperation {
    * @return true if given Family id is one of the set operations
    */
   static boolean isValidSetOpID(int id) {
-    int loID = Family.UNION.getID();
-    int hiID = Family.A_NOT_B.getID();
-    return ((hiID - id) | (id - loID)) >= 0;
+    Family family = Family.idToFamily(id);
+    boolean ret = ((family == Family.UNION) || (family == Family.INTERSECTION) 
+        || (family == Family.A_NOT_B));
+    return ret;
   }
 }

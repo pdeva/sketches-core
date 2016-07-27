@@ -5,17 +5,18 @@
 
 package com.yahoo.sketches.tuple;
 
+import static com.yahoo.sketches.Util.ceilingPowerOf2;
+
 import java.lang.reflect.Array;
 import java.nio.ByteOrder;
 
-import static com.yahoo.sketches.Util.ceilingPowerOf2;
-
 import com.yahoo.sketches.Family;
+import com.yahoo.sketches.HashOperations;
 import com.yahoo.sketches.QuickSelect;
+import com.yahoo.sketches.SketchesArgumentException;
 import com.yahoo.sketches.memory.Memory;
 import com.yahoo.sketches.memory.MemoryRegion;
 import com.yahoo.sketches.memory.NativeMemory;
-import com.yahoo.sketches.SketchesArgumentException;
 
 /**
  * A generic tuple sketch using the QuickSelect algorithm.
@@ -24,7 +25,9 @@ import com.yahoo.sketches.SketchesArgumentException;
  */
 class QuickSelectSketch<S extends Summary> extends Sketch<S> {
   private static final byte serialVersionUID = 1;
-  private enum Flags { IS_BIG_ENDIAN, IS_IN_SAMPLING_MODE, IS_EMPTY, HAS_ENTRIES, IS_THETA_INCLUDED }
+  
+  private enum Flags { IS_BIG_ENDIAN, IS_IN_SAMPLING_MODE, IS_EMPTY, HAS_ENTRIES, 
+    IS_THETA_INCLUDED }
 
   static final int MIN_NOM_ENTRIES = 32;
   static final int DEFAULT_LG_RESIZE_FACTOR = 3;
@@ -40,7 +43,8 @@ class QuickSelectSketch<S extends Summary> extends Sketch<S> {
 
   /**
    * This is to create an instance of a QuickSelectSketch with default resize factor.
-   * @param nomEntries Nominal number of entries. Forced to the nearest power of 2 greater than given value.
+   * @param nomEntries Nominal number of entries. Forced to the nearest power of 2 greater than 
+   * given value.
    * @param summaryFactory An instance of a SummaryFactory.
    */
   QuickSelectSketch(final int nomEntries, final SummaryFactory<S> summaryFactory) {
@@ -49,7 +53,8 @@ class QuickSelectSketch<S extends Summary> extends Sketch<S> {
 
   /**
    * This is to create an instance of a QuickSelectSketch with custom resize factor
-   * @param nomEntries Nominal number of entries. Forced to the nearest power of 2 greater than given value.
+   * @param nomEntries Nominal number of entries. Forced to the nearest power of 2 greater than 
+   * given value.
    * @param lgResizeFactor log2(resizeFactor) - value from 0 to 3:
    * <pre>
    * 0 - no resizing (max size allocated),
@@ -59,13 +64,16 @@ class QuickSelectSketch<S extends Summary> extends Sketch<S> {
    * </pre>
    * @param summaryFactory An instance of a SummaryFactory.
    */
-  QuickSelectSketch(final int nomEntries, final int lgResizeFactor, final SummaryFactory<S> summaryFactory) {
+  QuickSelectSketch(final int nomEntries, final int lgResizeFactor, 
+      final SummaryFactory<S> summaryFactory) {
     this(nomEntries, lgResizeFactor, 1f, summaryFactory);
   }
 
   /**
-   * This is to create an instance of a QuickSelectSketch with custom resize factor and sampling probability
-   * @param nomEntries Nominal number of entries. Forced to the nearest power of 2 greater than given value.
+   * This is to create an instance of a QuickSelectSketch with custom resize factor and sampling 
+   * probability
+   * @param nomEntries Nominal number of entries. Forced to the nearest power of 2 greater than 
+   * given value.
    * @param lgResizeFactor log2(resizeFactor) - value from 0 to 3:
    * <pre>
    * 0 - no resizing (max size allocated),
@@ -76,14 +84,16 @@ class QuickSelectSketch<S extends Summary> extends Sketch<S> {
    * @param samplingProbability the given sampling probability
    * @param summaryFactory An instance of a SummaryFactory.
    */
-  QuickSelectSketch(final int nomEntries, final int lgResizeFactor, final float samplingProbability, final SummaryFactory<S> summaryFactory) {
+  QuickSelectSketch(final int nomEntries, final int lgResizeFactor, final float samplingProbability, 
+      final SummaryFactory<S> summaryFactory) {
     this(
       nomEntries,
       lgResizeFactor,
       samplingProbability,
       summaryFactory,
       1 << Util.startingSubMultiple(
-        Integer.numberOfTrailingZeros(ceilingPowerOf2(nomEntries) * 2), // target table size is twice the number of nominal entries
+        // target table size is twice the number of nominal entries
+        Integer.numberOfTrailingZeros(ceilingPowerOf2(nomEntries) * 2), 
         lgResizeFactor,
         Integer.numberOfTrailingZeros(MIN_NOM_ENTRIES)
       )
@@ -91,7 +101,8 @@ class QuickSelectSketch<S extends Summary> extends Sketch<S> {
   }
 
   @SuppressWarnings("unchecked")
-  QuickSelectSketch(final int nomEntries, final int lgResizeFactor, final float samplingProbability, final SummaryFactory<S> summaryFactory, final int startingSize) {
+  QuickSelectSketch(final int nomEntries, final int lgResizeFactor, final float samplingProbability, 
+      final SummaryFactory<S> summaryFactory, final int startingSize) {
     nomEntries_ = ceilingPowerOf2(nomEntries);
     lgResizeFactor_ = lgResizeFactor;
     samplingProbability_ = samplingProbability;
@@ -118,7 +129,8 @@ class QuickSelectSketch<S extends Summary> extends Sketch<S> {
       throw new SketchesArgumentException(
           "Serial version mismatch. Expected: " + serialVersionUID + ", actual: " + version);
     }
-    SerializerDeserializer.validateType(mem.getByte(offset++), SerializerDeserializer.SketchType.QuickSelectSketch);
+    SerializerDeserializer.validateType(mem.getByte(offset++), 
+        SerializerDeserializer.SketchType.QuickSelectSketch);
     final byte flags = mem.getByte(offset++);
     final boolean isBigEndian = (flags & (1 << Flags.IS_BIG_ENDIAN.ordinal())) > 0;
     if (isBigEndian ^ ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN)) {
@@ -148,7 +160,8 @@ class QuickSelectSketch<S extends Summary> extends Sketch<S> {
       count = mem.getInt(offset);
       offset += Integer.BYTES;
     }
-    DeserializeResult<SummaryFactory<S>> factoryResult = SerializerDeserializer.deserializeFromMemory(mem, offset);
+    DeserializeResult<SummaryFactory<S>> factoryResult = 
+        SerializerDeserializer.deserializeFromMemory(mem, offset);
     summaryFactory_ = factoryResult.getObject();
     offset += factoryResult.getSize();
     final int currentCapacity = 1 << lgCurrentCapacity_;
@@ -204,7 +217,8 @@ class QuickSelectSketch<S extends Summary> extends Sketch<S> {
   public CompactSketch<S> compact() {
     final long[] keys = new long[getRetainedEntries()];
     @SuppressWarnings("unchecked")
-    final S[] summaries = (S[]) Array.newInstance(summaries_.getClass().getComponentType(), getRetainedEntries());
+    final S[] summaries = (S[]) 
+      Array.newInstance(summaries_.getClass().getComponentType(), getRetainedEntries());
     int i = 0;
     for (int j = 0; j < keys_.length; j++) {
       if (summaries_[j] != null) {
@@ -250,7 +264,8 @@ class QuickSelectSketch<S extends Summary> extends Sketch<S> {
     if (isInSamplingMode()) {
       sizeBytes += Float.BYTES; // samplingProbability
     }
-    final boolean isThetaIncluded = isInSamplingMode() ? theta_ < samplingProbability_ : theta_ < Long.MAX_VALUE;
+    final boolean isThetaIncluded = isInSamplingMode() 
+        ? theta_ < samplingProbability_ : theta_ < Long.MAX_VALUE;
     if (isThetaIncluded) {
       sizeBytes += Long.BYTES;
     }
@@ -267,11 +282,11 @@ class QuickSelectSketch<S extends Summary> extends Sketch<S> {
     mem.putByte(offset++, (byte) SerializerDeserializer.SketchType.QuickSelectSketch.ordinal());
     final boolean isBigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
     mem.putByte(offset++, (byte) (
-      (isBigEndian ? 1 << Flags.IS_BIG_ENDIAN.ordinal() : 0) |
-      (isInSamplingMode() ? 1 << Flags.IS_IN_SAMPLING_MODE.ordinal() : 0) |
-      (isEmpty_ ? 1 << Flags.IS_EMPTY.ordinal() : 0) |
-      (count_ > 0 ? 1 << Flags.HAS_ENTRIES.ordinal() : 0) |
-      (isThetaIncluded ? 1<< Flags.IS_THETA_INCLUDED.ordinal() : 0)
+      (isBigEndian ? 1 << Flags.IS_BIG_ENDIAN.ordinal() : 0) 
+      | (isInSamplingMode() ? 1 << Flags.IS_IN_SAMPLING_MODE.ordinal() : 0) 
+      | (isEmpty_ ? 1 << Flags.IS_EMPTY.ordinal() : 0) 
+      | (count_ > 0 ? 1 << Flags.HAS_ENTRIES.ordinal() : 0) 
+      | (isThetaIncluded ? 1 << Flags.IS_THETA_INCLUDED.ordinal() : 0)
     ));
     mem.putByte(offset++, (byte) Integer.numberOfTrailingZeros(nomEntries_));
     mem.putByte(offset++, (byte) lgCurrentCapacity_);
@@ -316,7 +331,8 @@ class QuickSelectSketch<S extends Summary> extends Sketch<S> {
       if (index < 0) {
         summaries_[~index] = summary.copy();
       } else {
-        summaries_[index] = summaryFactory_.getSummarySetOperations().union(summaries_[index], summary);
+        summaries_[index] = 
+            summaryFactory_.getSummarySetOperations().union(summaries_[index], summary);
       }
       rebuildIfNeeded();
     }

@@ -10,22 +10,23 @@ import static com.yahoo.sketches.Util.toLog2;
 import static com.yahoo.sketches.frequencies.PreambleUtil.EMPTY_FLAG_MASK;
 import static com.yahoo.sketches.frequencies.PreambleUtil.SER_VER;
 import static com.yahoo.sketches.frequencies.PreambleUtil.extractActiveItems;
-import static com.yahoo.sketches.frequencies.PreambleUtil.extractLgCurMapSize;
-import static com.yahoo.sketches.frequencies.PreambleUtil.extractFlags;
 import static com.yahoo.sketches.frequencies.PreambleUtil.extractFamilyID;
-import static com.yahoo.sketches.frequencies.PreambleUtil.extractSerDeId;
+import static com.yahoo.sketches.frequencies.PreambleUtil.extractFlags;
+import static com.yahoo.sketches.frequencies.PreambleUtil.extractLgCurMapSize;
 import static com.yahoo.sketches.frequencies.PreambleUtil.extractLgMaxMapSize;
 import static com.yahoo.sketches.frequencies.PreambleUtil.extractPreLongs;
+import static com.yahoo.sketches.frequencies.PreambleUtil.extractSerDeId;
 import static com.yahoo.sketches.frequencies.PreambleUtil.extractSerVer;
 import static com.yahoo.sketches.frequencies.PreambleUtil.insertActiveItems;
-import static com.yahoo.sketches.frequencies.PreambleUtil.insertLgCurMapSize;
-import static com.yahoo.sketches.frequencies.PreambleUtil.insertFlags;
 import static com.yahoo.sketches.frequencies.PreambleUtil.insertFamilyID;
-import static com.yahoo.sketches.frequencies.PreambleUtil.insertSerDeId;
+import static com.yahoo.sketches.frequencies.PreambleUtil.insertFlags;
+import static com.yahoo.sketches.frequencies.PreambleUtil.insertLgCurMapSize;
 import static com.yahoo.sketches.frequencies.PreambleUtil.insertLgMaxMapSize;
 import static com.yahoo.sketches.frequencies.PreambleUtil.insertPreLongs;
+import static com.yahoo.sketches.frequencies.PreambleUtil.insertSerDeId;
 import static com.yahoo.sketches.frequencies.PreambleUtil.insertSerVer;
-//import static com.yahoo.sketches.SerDeType.ARRAY_OF_LONGS;
+import static com.yahoo.sketches.frequencies.Util.LG_MIN_MAP_SIZE;
+import static com.yahoo.sketches.frequencies.Util.SAMPLE_SIZE;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -63,9 +64,9 @@ import com.yahoo.sketches.memory.NativeMemory;
  * <p>The hash map starts at a very small size (8 entries), and grows as needed up to the 
  * specified <i>maxMapSize</i>.</p>
  *  
- * <p>The internal memory space usage of this sketch is 18 * <i>mapSize</i> bytes, plus a small constant
- * number of additional bytes. The internal memory space usage of this sketch will never exceed 
- * 18 * <i>maxMapSize</i> bytes, plus a small constant number of additional bytes.</p>
+ * <p>The internal memory space usage of this sketch is 18 * <i>mapSize</i> bytes, plus a small 
+ * constant number of additional bytes. The internal memory space usage of this sketch will never 
+ * exceed 18 * <i>maxMapSize</i> bytes, plus a small constant number of additional bytes.</p>
  * 
  * <p><b>Maximum Capacity of the Sketch</b></p>
  * 
@@ -127,21 +128,6 @@ import com.yahoo.sketches.memory.NativeMemory;
  * @author Lee Rhodes
  */
 public class LongsSketch {
-
-  /**
-   * We start by allocating a small data structure capable of explicitly storing very small 
-   * streams and then growing it as the stream grows. The following constant controls the 
-   * size of the initial data structure.
-   */
-  static final int LG_MIN_MAP_SIZE = 3; // This is somewhat arbitrary
-
-  /**
-   * This is a constant large enough that computing the median of SAMPLE_SIZE
-   * randomly selected entries from a list of numbers and outputting
-   * the empirical median will give a constant-factor approximation to the 
-   * true median with high probability
-   */
-  private static final int SAMPLE_SIZE = 1024;
 
   private static final int STR_PREAMBLE_TOKENS = 7;
 
@@ -208,7 +194,7 @@ public class LongsSketch {
     hashMap = new ReversePurgeLongHashMap(1 << lgCurMapSz);
     this.curMapCap = hashMap.getCapacity(); 
     final int maxMapCap = 
-        (int) ((1 << lgMaxMapSize)*ReversePurgeLongHashMap.getLoadFactor());
+        (int) ((1 << lgMaxMapSize) * ReversePurgeLongHashMap.getLoadFactor());
     offset = 0;
     sampleSize = Math.min(SAMPLE_SIZE, maxMapCap); 
   }
@@ -242,12 +228,12 @@ public class LongsSketch {
     }
     if (serVer != SER_VER) {                            //Byte 1
       throw new SketchesArgumentException(
-          "Possible Corruption: Ser Ver must be "+SER_VER+": " + serVer);
+          "Possible Corruption: Ser Ver must be " + SER_VER + ": " + serVer);
     }
     final int actFamID = Family.FREQUENCY.getID();      //Byte 2
     if (familyID != actFamID) {
       throw new SketchesArgumentException(
-          "Possible Corruption: FamilyID must be "+actFamID+": " + familyID);
+          "Possible Corruption: FamilyID must be " + actFamID + ": " + familyID);
     }
     if (empty ^ preLongsEq1) {                          //Byte 5 and Byte 0
       throw new SketchesArgumentException(
@@ -255,8 +241,8 @@ public class LongsSketch {
     }
     if (serDeId != ARRAY_OF_LONGS_SERDE_ID) {           //Byte 6,7
       throw new SketchesArgumentException(
-          "Possible Corruption: serDeId incorrect: " + serDeId + " != " + 
-              ARRAY_OF_LONGS_SERDE_ID);
+          "Possible Corruption: serDeId incorrect: " + serDeId + " != " 
+              + ARRAY_OF_LONGS_SERDE_ID);
     }
 
     if (empty) {
@@ -296,9 +282,9 @@ public class LongsSketch {
    */
   public static LongsSketch getInstance(final String string) {
     final String[] tokens = string.split(",");
-    if (tokens.length < STR_PREAMBLE_TOKENS+2) {
+    if (tokens.length < STR_PREAMBLE_TOKENS + 2) {
       throw new SketchesArgumentException(
-          "String not long enough: "+tokens.length);
+          "String not long enough: " + tokens.length);
     }
     final int serVer  = Integer.parseInt(tokens[0]);
     final int famID   = Integer.parseInt(tokens[1]);
@@ -313,25 +299,25 @@ public class LongsSketch {
 
     //checks
     if (serVer != SER_VER) {
-      throw new SketchesArgumentException("Possible Corruption: Bad SerVer: "+serVer);
+      throw new SketchesArgumentException("Possible Corruption: Bad SerVer: " + serVer);
     }
     Family.FREQUENCY.checkFamilyID(famID);
     final boolean empty = flags > 0;
     final boolean zeroStream = (streamLength == 0);
     if (empty ^ zeroStream) {
       throw new SketchesArgumentException(
-          "Possible Corruption: (Empty ^ StreamLength=0) = true : Empty: " + empty + 
-          ", strLen: " + streamLength);
+          "Possible Corruption: (Empty ^ StreamLength=0) = true : Empty: " + empty 
+            + ", strLen: " + streamLength);
     }
     if (type != ARRAY_OF_LONGS_SERDE_ID) {
       throw new SketchesArgumentException(
           "Possible Corruption: Sketch TYPE incorrect: " + type);
     }
     final int numTokens = tokens.length;
-    if (2*numActive != (numTokens - STR_PREAMBLE_TOKENS -2)) {
+    if (2 * numActive != (numTokens - STR_PREAMBLE_TOKENS - 2)) {
       throw new SketchesArgumentException(
-          "Possible Corruption: Incorrect # of tokens: " + numTokens + 
-          ", numActive: " + numActive);
+          "Possible Corruption: Incorrect # of tokens: " + numTokens 
+            + ", numActive: " + numActive);
     }
 
     final LongsSketch sketch = new LongsSketch(lgMax, lgCur);
@@ -354,7 +340,7 @@ public class LongsSketch {
     final int serVer = SER_VER;                 //0
     final int famID = Family.FREQUENCY.getID(); //1
     final int lgMaxMapSz = lgMaxMapSize;        //2
-    final int flags = (hashMap.getNumActive() == 0)? EMPTY_FLAG_MASK : 0; //3
+    final int flags = (hashMap.getNumActive() == 0) ? EMPTY_FLAG_MASK : 0; //3
     final short type = ARRAY_OF_LONGS_SERDE_ID;  //4
     final String fmt = "%d,%d,%d,%d,%d,%d,%d,";
     final String s = 
@@ -391,7 +377,7 @@ public class LongsSketch {
     pre0 = insertFamilyID(Family.FREQUENCY.getID(), pre0);  //Byte 2
     pre0 = insertLgMaxMapSize(lgMaxMapSize, pre0);          //Byte 3
     pre0 = insertLgCurMapSize(hashMap.getLgLength(), pre0); //Byte 4
-    pre0 = (empty)? insertFlags(EMPTY_FLAG_MASK, pre0) : insertFlags(0, pre0); //Byte 5
+    pre0 = (empty) ? insertFlags(EMPTY_FLAG_MASK, pre0) : insertFlags(0, pre0); //Byte 5
     pre0 = insertSerDeId(ARRAY_OF_LONGS_SERDE_ID, pre0);    //Byte 6,7
 
     if (empty) {
@@ -430,7 +416,9 @@ public class LongsSketch {
    */
   public void update(final long item, final long count) {
     if (count == 0) return;
-    if (count < 0) throw new SketchesArgumentException("Count may not be negative");
+    if (count < 0) {
+      throw new SketchesArgumentException("Count may not be negative");
+    }
     this.streamLength += count;
     hashMap.adjustOrPutValue(item, count);
 
@@ -514,7 +502,7 @@ public class LongsSketch {
    * Returns an array of Rows that include frequent items, estimates, upper and lower bounds
    * given an ErrorCondition. 
    * 
-   * The method first examines all active items in the sketch (items that have a counter).
+   * <p>The method first examines all active items in the sketch (items that have a counter).
    *  
    * <p>If <i>ErrorType = NO_FALSE_NEGATIVES</i>, this will include an item in the result 
    * list if getUpperBound(item) &gt; getMaximumError(). 
@@ -553,6 +541,7 @@ public class LongsSketch {
       this.ub = ub;
       this.lb = lb;
     }
+    
     /**
      * @return item of type T
      */
@@ -585,11 +574,52 @@ public class LongsSketch {
       return String.format(fmt, est, ub, lb, item);
     }
 
+    /**
+     * This compareTo is strictly limited to the Row.getEstimate() value and does not imply any 
+     * ordering whatsoever to the other elements of the row: item and upper and lower bounds. 
+     * Defined this way, this compareTo will be consistent with hashCode() and equals(Object).
+     * @param that the other row to compare to.
+     * @return a negative integer, zero, or a positive integer as this.getEstimate() is less than, 
+     * equal to, or greater than that.getEstimate().
+     */
     @Override
     public int compareTo(final Row that) {
       return (this.est < that.est) ? -1 : (this.est > that.est) ? 1 : 0;
     }
-  }
+    
+    /**
+     * This hashCode is computed only from the Row.getEstimate() value. 
+     * Defined this way, this hashCode will be consistent with equals(Object):<br>
+     * If (x.equals(y)) implies: x.hashCode() == y.hashCode().<br>
+     * If (!x.equals(y)) does NOT imply: x.hashCode() != y.hashCode().
+     * @return the hashCode computed from getEstimate().
+     */
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + (int) (est ^ (est >>> 32));
+      return result;
+    }
+    
+    /**
+     * This equals is computed only from the Row.getEstimate() value and does not imply equality 
+     * of the other items within the row: item and upper and lower bounds.
+     * Defined this way, this equals will be consistent with compareTo(Row).
+     * @param obj the other row to determine equality with.
+     * @return true if this.getEstimate() equals ((Row)obj).getEstimate().
+     */
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if ( !(obj instanceof Row)) return false;
+      Row that = (Row) obj;
+      if (est != that.est) return false;
+      return true;
+    }
+    
+  } // End of class Row
 
   Row[] sortItems(final long threshold, final ErrorType errorType) {
     final ArrayList<Row> rowList = new ArrayList<Row>();
@@ -686,8 +716,7 @@ public class LongsSketch {
    * @return the number of bytes required to store this sketch as an array of bytes.
    */
   public int getStorageBytes() {
-    if (isEmpty())
-      return 8;
+    if (isEmpty()) return 8;
     return 6 * 8 + 16 * getNumActiveItems();
   }
 

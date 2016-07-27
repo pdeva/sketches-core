@@ -13,7 +13,7 @@ import com.yahoo.sketches.memory.Memory;
  * This Memory can be off-heap, which if managed properly will greatly reduce the need for
  * the JVM to perform garbage collection.</p>
  */
-class DirectArrayOfDoublesIntersection extends ArrayOfDoublesIntersection {
+final class DirectArrayOfDoublesIntersection extends ArrayOfDoublesIntersection {
 
   private Memory mem_;
 
@@ -29,7 +29,8 @@ class DirectArrayOfDoublesIntersection extends ArrayOfDoublesIntersection {
   }
 
   @Override
-  protected ArrayOfDoublesQuickSelectSketch createSketch(final int size, final int numValues, final long seed) {
+  protected ArrayOfDoublesQuickSelectSketch createSketch(final int size, final int numValues, 
+      final long seed) {
     return new DirectArrayOfDoublesQuickSelectSketch(size, 0, 1f, numValues, seed, mem_);
   }
 

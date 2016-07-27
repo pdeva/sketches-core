@@ -21,8 +21,10 @@ import static com.yahoo.sketches.BoundsOnBinomialProportions.approximateUpperBou
  * 
  * @author Kevin Lang
  */
-public class BoundsOnRatiosInSampledSets {
+public final class BoundsOnRatiosInSampledSets {
   private static final double NUM_STD_DEVS = 2.0; //made a constant to simplify interface.
+  
+  private BoundsOnRatiosInSampledSets() {}
   
   /**
    * Return the approximate lower bound based on a 95% confidence interval
@@ -76,16 +78,16 @@ public class BoundsOnRatiosInSampledSets {
    */
   private static double hackyAdjuster(double f) {
     double tmp = Math.sqrt(1.0 - f);
-    return (f <= 0.5)? tmp : tmp + (0.01 * (f - 0.5));
+    return (f <= 0.5) ? tmp : tmp + (0.01 * (f - 0.5));
   }
   
   static void checkInputs(long a, long b, double f) {
     if ( ( (a - b) | (a) | (b) ) < 0) {  //if any group goes negative
       throw new SketchesArgumentException(
-          "a must be >= b and neither a nor b can be < 0: a = "+a+", b = "+b);
+          "a must be >= b and neither a nor b can be < 0: a = " + a + ", b = " + b);
     }
     if ((f > 1.0) || (f <= 0.0)) {
-      throw new SketchesArgumentException("Required: ((f <= 1.0) && (f > 0.0)): "+f);
+      throw new SketchesArgumentException("Required: ((f <= 1.0) && (f > 0.0)): " + f);
     }
   }
   
@@ -107,7 +109,7 @@ public class BoundsOnRatiosInSampledSets {
    * @return the approximate lower bound
    */
   public static double getEstimateOfB(long b, double f) {
-    checkInputs(b+1, b, f);
+    checkInputs(b + 1, b, f);
     return b / f;
   }
 }

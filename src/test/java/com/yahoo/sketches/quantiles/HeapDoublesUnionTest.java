@@ -5,8 +5,11 @@
 package com.yahoo.sketches.quantiles;
 
 import static com.yahoo.sketches.quantiles.HeapDoublesSketchTest.buildQS;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.yahoo.sketches.memory.Memory;
@@ -18,7 +21,7 @@ public class HeapDoublesUnionTest {
   public void checkUnion1() {
     DoublesSketch result;
     DoublesSketch qs1 = null;
-    DoublesUnion union = DoublesUnion.builder().build(); //virgin
+    DoublesUnion union = DoublesUnion.builder().setK(256).build(); //virgin 256
     
     qs1 = buildQS(256, 1000); //first 1000
     union.update(qs1); //copy   me = null,  that = valid, OK
@@ -40,7 +43,7 @@ public class HeapDoublesUnionTest {
   public void checkUnion2() {
     DoublesSketch qs1 = buildQS(256, 1000);
     DoublesSketch qs2 = buildQS(128, 1000);
-    DoublesUnion union = DoublesUnion.builder().build(); //virgin
+    DoublesUnion union = DoublesUnion.builder().setK(256).build(); //virgin 256
     
     union.update(qs1);
     DoublesSketch res1 = union.getResult();
@@ -77,10 +80,10 @@ public class HeapDoublesUnionTest {
   public void checkUnionUpdateLogic() {
     HeapDoublesSketch qs1 = null;
     HeapDoublesSketch qs2 = (HeapDoublesSketch)buildQS(256, 0);
-    DoublesSketch result = HeapDoublesUnion.updateLogic(qs1, qs2); //null, empty
-    result = HeapDoublesUnion.updateLogic(qs2, qs1); //empty, null
+    DoublesSketch result = HeapDoublesUnion.updateLogic(256, qs1, qs2); //null, empty
+    result = HeapDoublesUnion.updateLogic(256, qs2, qs1); //empty, null
     qs2.update(1); //no longer empty
-    result = HeapDoublesUnion.updateLogic(qs2, qs1); //valid, null
+    result = HeapDoublesUnion.updateLogic(256, qs2, qs1); //valid, null
     assertEquals(result.getMaxValue(), result.getMinValue(), 0.0);
   }
   
@@ -119,6 +122,28 @@ public class HeapDoublesUnionTest {
     union.update(sk2);
     DoublesSketch sk3 = union.getResultAndReset();
     assertNull(sk3);
+  }
+  
+  @Test
+  public void differentLargerK() {
+    DoublesUnion union = DoublesUnion.builder().setK(128).build();
+    DoublesSketch sketch1 = buildQS(256, 0);
+    union.update(sketch1);
+    Assert.assertEquals(union.getResult().getK(), 128);
+    sketch1.update(1.0);
+    union.update(sketch1);
+    Assert.assertEquals(union.getResult().getK(), 128);
+  }
+  
+  @Test
+  public void differentSmallerK() {
+    DoublesUnion union = DoublesUnion.builder().setK(128).build();
+    DoublesSketch sketch1 = buildQS(64, 0);
+    union.update(sketch1);
+    Assert.assertEquals(union.getResult().getK(), 64);
+    sketch1.update(1.0);
+    union.update(sketch1);
+    Assert.assertEquals(union.getResult().getK(), 64);
   }
   
   @Test

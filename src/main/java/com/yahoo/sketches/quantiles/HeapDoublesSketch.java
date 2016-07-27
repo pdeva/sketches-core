@@ -6,8 +6,8 @@
 package com.yahoo.sketches.quantiles;
 
 import static com.yahoo.sketches.quantiles.PreambleUtil.EMPTY_FLAG_MASK;
-import static com.yahoo.sketches.quantiles.PreambleUtil.MIN_DOUBLE;
 import static com.yahoo.sketches.quantiles.PreambleUtil.MAX_DOUBLE;
+import static com.yahoo.sketches.quantiles.PreambleUtil.MIN_DOUBLE;
 import static com.yahoo.sketches.quantiles.PreambleUtil.N_LONG;
 import static com.yahoo.sketches.quantiles.PreambleUtil.SER_VER;
 import static com.yahoo.sketches.quantiles.PreambleUtil.extractFamilyID;
@@ -19,13 +19,14 @@ import static com.yahoo.sketches.quantiles.PreambleUtil.extractSerVer;
 import static com.yahoo.sketches.quantiles.PreambleUtil.insertFamilyID;
 import static com.yahoo.sketches.quantiles.PreambleUtil.insertFlags;
 import static com.yahoo.sketches.quantiles.PreambleUtil.insertK;
-import static com.yahoo.sketches.quantiles.PreambleUtil.insertSerDeId;
 import static com.yahoo.sketches.quantiles.PreambleUtil.insertPreLongs;
+import static com.yahoo.sketches.quantiles.PreambleUtil.insertSerDeId;
 import static com.yahoo.sketches.quantiles.PreambleUtil.insertSerVer;
 import static com.yahoo.sketches.quantiles.Util.computeBaseBufferItems;
 import static com.yahoo.sketches.quantiles.Util.computeBitPattern;
-import static com.yahoo.sketches.quantiles.Util.computeRetainedItems;
 import static com.yahoo.sketches.quantiles.Util.computeCombBufItemCapacity;
+import static com.yahoo.sketches.quantiles.Util.computeRetainedItems;
+
 import java.util.Arrays;
 
 import com.yahoo.sketches.ArrayOfDoublesSerDe;
@@ -40,7 +41,7 @@ import com.yahoo.sketches.memory.NativeMemory;
  * @author Kevin Lang
  * @author Lee Rhodes
  */
-class HeapDoublesSketch extends DoublesSketch {
+final class HeapDoublesSketch extends DoublesSketch {
 
   private static final short ARRAY_OF_DOUBLES_SERDE_ID = new ArrayOfDoublesSerDe().getId();
   /**
@@ -63,17 +64,17 @@ class HeapDoublesSketch extends DoublesSketch {
 
   /**
    * Number of samples currently in base buffer.
-   *
-   * Count = N % (2*K)
+   * 
+   * <p>Count = N % (2*K)
    */
   int baseBufferCount_;
 
   /**
    * Active levels expressed as a bit pattern.
-   *
-   * Pattern = N / (2 * K)
+   * 
+   * <p>Pattern = N / (2 * K)
    */
-  long bitPattern_; //TODO need this?
+  long bitPattern_;
 
   /**
    * This single array contains the base buffer plus all levels some of which may not be used.
@@ -110,7 +111,7 @@ class HeapDoublesSketch extends DoublesSketch {
     hqs.maxValue_ = java.lang.Double.NEGATIVE_INFINITY;
     return hqs;
   }
-
+  
   /**
    * Heapifies the given srcMem, which must be a Memory image of a DoublesSketch
    * @param srcMem a Memory image of a sketch.
@@ -171,7 +172,7 @@ class HeapDoublesSketch extends DoublesSketch {
     int levelBytes = k * Double.BYTES;
     for (int level = 0; bits != 0L; level++, bits >>>= 1) {
       if ((bits & 1L) > 0L) {
-        srcMem.getDoubleArray(srcMemItemsOffsetBytes, hqs.combinedBuffer_, (2+level) * k, k);
+        srcMem.getDoubleArray(srcMemItemsOffsetBytes, hqs.combinedBuffer_, (2 + level) * k, k);
         srcMemItemsOffsetBytes += levelBytes;
       }
     }
@@ -205,12 +206,12 @@ class HeapDoublesSketch extends DoublesSketch {
     if (dataItem > maxValue_) { maxValue_ = dataItem; }
     if (dataItem < minValue_) { minValue_ = dataItem; }
 
-    if (baseBufferCount_+1 > combinedBufferItemCapacity_) {
+    if (baseBufferCount_ + 1 > combinedBufferItemCapacity_) {
       DoublesUtil.growBaseBuffer(this);
     } 
     combinedBuffer_[baseBufferCount_++] = dataItem;
     n_++;
-    if (baseBufferCount_ == 2*k_) {
+    if (baseBufferCount_ == 2 * k_) {
       DoublesUtil.processFullBaseBuffer(this);
     }
   }
@@ -302,9 +303,9 @@ class HeapDoublesSketch extends DoublesSketch {
     minValue_ = java.lang.Double.POSITIVE_INFINITY;
     maxValue_ = java.lang.Double.NEGATIVE_INFINITY;
   }
-
+  
   @Override
-  public byte[] toByteArray() {
+  public byte[] toByteArray(boolean sort) {
     int preLongs, arrLongs, flags;
     boolean empty = isEmpty();
     
@@ -342,7 +343,10 @@ class HeapDoublesSketch extends DoublesSketch {
     //insert BaseBuffer
     int bbItems = computeBaseBufferItems(k_, n_);
     int offsetBytes = (preLongs + 2) << 3;
-    if ((bbItems < 2*k_) && (bbItems > 0)) {
+    if ((bbItems < 2 * k_) && (bbItems > 0)) {
+      if (sort)  {
+        Arrays.sort(combinedBuffer_, 0, bbItems);
+      }
       memOut.putDoubleArray(offsetBytes , combinedBuffer_, 0, bbItems);
       offsetBytes += Double.BYTES * bbItems;
     }
@@ -371,13 +375,13 @@ class HeapDoublesSketch extends DoublesSketch {
   }
   
   @Override
-  public void putMemory(Memory dstMem) {
-    byte[] byteArr = toByteArray();
+  public void putMemory(Memory dstMem, boolean sort) {
+    byte[] byteArr = toByteArray(sort);
     int arrLen = byteArr.length;
     long memCap = dstMem.getCapacity();
     if (memCap < arrLen) {
       throw new SketchesArgumentException(
-          "Destination Memory not large enough: "+memCap +" < "+arrLen);
+          "Destination Memory not large enough: " + memCap + " < " + arrLen);
     }
     dstMem.putByteArray(0, byteArr, 0, arrLen);
   }

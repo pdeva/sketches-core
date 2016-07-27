@@ -5,17 +5,37 @@
 
 package com.yahoo.sketches.theta;
 
+import static com.yahoo.sketches.Util.MIN_LG_ARR_LONGS;
+import static com.yahoo.sketches.Util.floorPowerOf2;
 import static com.yahoo.sketches.theta.CompactSketch.compactCachePart;
-import static com.yahoo.sketches.theta.PreambleUtil.*;
-import static com.yahoo.sketches.Util.*;
+import static com.yahoo.sketches.theta.PreambleUtil.EMPTY_FLAG_MASK;
+import static com.yahoo.sketches.theta.PreambleUtil.FLAGS_BYTE;
+import static com.yahoo.sketches.theta.PreambleUtil.LG_ARR_LONGS_BYTE;
+import static com.yahoo.sketches.theta.PreambleUtil.RETAINED_ENTRIES_INT;
+import static com.yahoo.sketches.theta.PreambleUtil.SEED_HASH_SHORT;
+import static com.yahoo.sketches.theta.PreambleUtil.SER_VER;
+import static com.yahoo.sketches.theta.PreambleUtil.THETA_LONG;
+import static com.yahoo.sketches.theta.PreambleUtil.extractFamilyID;
+import static com.yahoo.sketches.theta.PreambleUtil.extractFlags;
+import static com.yahoo.sketches.theta.PreambleUtil.extractLgArrLongs;
+import static com.yahoo.sketches.theta.PreambleUtil.extractPreLongs;
+import static com.yahoo.sketches.theta.PreambleUtil.extractSerVer;
+import static com.yahoo.sketches.theta.PreambleUtil.insertCurCount;
+import static com.yahoo.sketches.theta.PreambleUtil.insertFamilyID;
+import static com.yahoo.sketches.theta.PreambleUtil.insertFlags;
+import static com.yahoo.sketches.theta.PreambleUtil.insertLgArrLongs;
+import static com.yahoo.sketches.theta.PreambleUtil.insertP;
+import static com.yahoo.sketches.theta.PreambleUtil.insertPreLongs;
+import static com.yahoo.sketches.theta.PreambleUtil.insertSeedHash;
+import static com.yahoo.sketches.theta.PreambleUtil.insertSerVer;
 import static java.lang.Math.min;
 
 import com.yahoo.sketches.Family;
-import com.yahoo.sketches.memory.Memory;
 import com.yahoo.sketches.HashOperations;
 import com.yahoo.sketches.SketchesArgumentException;
 import com.yahoo.sketches.SketchesStateException;
 import com.yahoo.sketches.Util;
+import com.yahoo.sketches.memory.Memory;
 
 /**
  * Intersection operation for Theta Sketches.
@@ -27,7 +47,7 @@ import com.yahoo.sketches.Util;
  * @author Lee Rhodes
  * @author Kevin Lang
  */
-class DirectIntersection extends SetOperation implements Intersection {
+final class DirectIntersection extends SetOperation implements Intersection {
   private final short seedHash_;
   //Note: Intersection does not use lgNomLongs or k, per se.
   private int lgArrLongs_; //current size of hash table
@@ -96,7 +116,9 @@ class DirectIntersection extends SetOperation implements Intersection {
       throw new SketchesArgumentException("PreambleLongs must = 3.");
     }
     int serVer = extractSerVer(pre0);
-    if (serVer != 3) throw new SketchesArgumentException("Ser Version must = 3");
+    if (serVer != 3) {
+      throw new SketchesArgumentException("Ser Version must = 3");
+    }
     int famID = extractFamilyID(pre0);
     Family.INTERSECTION.checkFamilyID(famID);
     //Note: Intersection does not use lgNomLongs or k, per se.
@@ -115,7 +137,7 @@ class DirectIntersection extends SetOperation implements Intersection {
     if (empty_) {
       if (curCount_ != 0) {
         throw new SketchesArgumentException(
-            "srcMem empty state inconsistent with curCount: "+empty_+","+curCount_);
+            "srcMem empty state inconsistent with curCount: " + empty_ + "," + curCount_);
       }
       //empty = true AND curCount_ = 0: OK
     } //else empty = false, curCount could be anything
@@ -170,9 +192,10 @@ class DirectIntersection extends SetOperation implements Intersection {
         lgArrLongs_ = setLgArrLongs(requiredLgArrLongs);
         mem_.clear(CONST_PREAMBLE_LONGS << 3, 8 << lgArrLongs_);
       }
-      else { //not enough space in dstMem //TODO move to request model
+      else { //not enough space in dstMem //TODO move to request model?
         throw new SketchesArgumentException(
-            "Insufficient dstMem hash table space: "+(1<<requiredLgArrLongs)+" > "+(1<<lgArrLongs_));
+            "Insufficient dstMem hash table space: " 
+                + (1 << requiredLgArrLongs) + " > " + (1 << lgArrLongs_));
       }
       moveDataToHT(sketchIn.getCache(), curCount_);
     }
@@ -225,7 +248,7 @@ class DirectIntersection extends SetOperation implements Intersection {
   @Override
   public byte[] toByteArray() {
     int preBytes = CONST_PREAMBLE_LONGS << 3;
-    int dataBytes = (curCount_ > 0)? 8 << lgArrLongs_ : 0;
+    int dataBytes = (curCount_ > 0) ? 8 << lgArrLongs_ : 0;
     int totalBytes = preBytes + dataBytes;
     byte[] byteArrOut = new byte[totalBytes];
     mem_.getByteArray(0, byteArrOut, 0, totalBytes);
@@ -304,7 +327,8 @@ class DirectIntersection extends SetOperation implements Intersection {
           HashOperations.hashSearchOrInsert(mem_, lgArrLongs_, hashIn, preBytes) < 0 ? 1 : 0;
     }
     if (tmpCnt != count) {
-      throw new SketchesArgumentException("Count Check Exception: got: "+tmpCnt+", expected: "+count);
+      throw new SketchesArgumentException("Count Check Exception: got: " + tmpCnt 
+          + ", expected: " + count);
     }
   }
   
@@ -316,7 +340,7 @@ class DirectIntersection extends SetOperation implements Intersection {
     int maxLgArrLongs = Integer.numberOfTrailingZeros(floorPowerOf2((int)(cap - preBytes)) >>> 3);
     if (maxLgArrLongs < MIN_LG_ARR_LONGS) {
       throw new SketchesArgumentException(
-        "dstMem not large enough for minimum sized hash table: "+ cap);
+        "dstMem not large enough for minimum sized hash table: " + cap);
     }
     return maxLgArrLongs;
   }

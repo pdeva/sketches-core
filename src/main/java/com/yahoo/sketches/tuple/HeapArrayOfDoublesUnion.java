@@ -2,6 +2,7 @@
  * Copyright 2015-16, Yahoo! Inc.
  * Licensed under the terms of the Apache License 2.0. See LICENSE file at the project root for terms.
  */
+
 package com.yahoo.sketches.tuple;
 
 import static com.yahoo.sketches.Util.DEFAULT_UPDATE_SEED;
@@ -12,11 +13,12 @@ import com.yahoo.sketches.memory.Memory;
  * The on-heap implementation of the Union set operation for tuple sketches of type
  * ArrayOfDoubles.
  */
-class HeapArrayOfDoublesUnion extends ArrayOfDoublesUnion {
+final class HeapArrayOfDoublesUnion extends ArrayOfDoublesUnion {
 
   /**
    * Creates an instance of HeapArrayOfDoublesUnion with a custom seed
-   * @param nomEntries Nominal number of entries. Forced to the nearest power of 2 greater than given value.
+   * @param nomEntries Nominal number of entries. Forced to the nearest power of 2 greater than 
+   * given value.
    * @param numValues Number of double values to keep for each key.
    * @param seed <a href="{@docRoot}/resources/dictionary.html#seed">See seed</a>
    */

@@ -5,13 +5,15 @@
 
 package com.yahoo.sketches.tuple;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.lang.reflect.Array;
 import java.nio.ByteOrder;
 
 import com.yahoo.sketches.Family;
+import com.yahoo.sketches.SketchesArgumentException;
 import com.yahoo.sketches.memory.Memory;
 import com.yahoo.sketches.memory.NativeMemory;
-import com.yahoo.sketches.SketchesArgumentException;
 
 /**
  * CompactSketches are never created directly. They are created as a result of
@@ -25,6 +27,7 @@ import com.yahoo.sketches.SketchesArgumentException;
  */
 public class CompactSketch<S extends Summary> extends Sketch<S> {
   private static final byte serialVersionUID = 1;
+  
   private enum Flags { IS_BIG_ENDIAN, IS_EMPTY, HAS_ENTRIES, IS_THETA_INCLUDED }
 
   CompactSketch(final long[] keys, final S[] summaries, final long theta, final boolean isEmpty) {
@@ -46,11 +49,11 @@ public class CompactSketch<S extends Summary> extends Sketch<S> {
     byte familyId = mem.getByte(offset++);
     SerializerDeserializer.validateFamily(familyId, preambleLongs);
     if (version != serialVersionUID) {
-      throw new SketchesArgumentException("Serial version mismatch. Expected: " + serialVersionUID + 
-          ", actual: " + version);
+      throw new SketchesArgumentException("Serial version mismatch. Expected: " + serialVersionUID 
+          + ", actual: " + version);
     }
-    SerializerDeserializer.
-      validateType(mem.getByte(offset++), SerializerDeserializer.SketchType.CompactSketch);
+    SerializerDeserializer
+      .validateType(mem.getByte(offset++), SerializerDeserializer.SketchType.CompactSketch);
     byte flags = mem.getByte(offset++);
     boolean isBigEndian = (flags & (1 << Flags.IS_BIG_ENDIAN.ordinal())) > 0;
     if (isBigEndian ^ ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN)) {
@@ -72,7 +75,7 @@ public class CompactSketch<S extends Summary> extends Sketch<S> {
       byte[] classNameBuffer = new byte[classNameLength];
       mem.getByteArray(offset, classNameBuffer, 0, classNameLength);
       offset += classNameLength;
-      String className = new String(classNameBuffer);
+      String className = new String(classNameBuffer, UTF_8);
       keys_ = new long[count];
       for (int i = 0; i < count; i++) {
         keys_[i] = mem.getLong(offset);
@@ -158,10 +161,10 @@ public class CompactSketch<S extends Summary> extends Sketch<S> {
     mem.putByte(offset++, (byte) SerializerDeserializer.SketchType.CompactSketch.ordinal());
     boolean isBigEndian = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);
     mem.putByte(offset++, (byte) (
-      (isBigEndian ? 1 << Flags.IS_BIG_ENDIAN.ordinal() : 0) |
-      (isEmpty_ ? 1 << Flags.IS_EMPTY.ordinal() : 0) |
-      (count > 0 ? 1 << Flags.HAS_ENTRIES.ordinal() : 0) |
-      (isThetaIncluded ? 1 << Flags.IS_THETA_INCLUDED.ordinal() : 0)
+      (isBigEndian ? 1 << Flags.IS_BIG_ENDIAN.ordinal() : 0) 
+      | (isEmpty_ ? 1 << Flags.IS_EMPTY.ordinal() : 0) 
+      | (count > 0 ? 1 << Flags.HAS_ENTRIES.ordinal() : 0) 
+      | (isThetaIncluded ? 1 << Flags.IS_THETA_INCLUDED.ordinal() : 0)
     ));
     if (isThetaIncluded) { //TODO check byte allignment to 8 bytes.
       mem.putLong(offset, theta_);
@@ -171,7 +174,7 @@ public class CompactSketch<S extends Summary> extends Sketch<S> {
       mem.putByte(offset++, (byte) summaryClassName.length());
       mem.putInt(offset, getRetainedEntries());
       offset += Integer.BYTES;
-      mem.putByteArray(offset, summaryClassName.getBytes(), 0, summaryClassName.length());
+      mem.putByteArray(offset, summaryClassName.getBytes(UTF_8), 0, summaryClassName.length());
       offset += summaryClassName.length();
       for (int i = 0; i < count; i++) {
         mem.putLong(offset, keys_[i]);

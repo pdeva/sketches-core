@@ -5,9 +5,12 @@
 
 package com.yahoo.sketches.memory;
 
-import sun.misc.Unsafe;
-
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
+import com.yahoo.sketches.SketchesException;
+
+import sun.misc.Unsafe;
 
 /**
  * Provides package private reference to the sun.misc.Unsafe class and its key static fields.
@@ -19,7 +22,7 @@ import java.lang.reflect.Constructor;
  * @author Lee Rhodes
  */
 
-@SuppressWarnings("restriction")
+//@SuppressWarnings("restriction")
 final class UnsafeUtil {
   static final Unsafe unsafe;
   
@@ -57,7 +60,7 @@ final class UnsafeUtil {
   static final int FLOAT_SHIFT     = 2;
   static final int DOUBLE_SHIFT    = 3;
   
-
+  public static final String LS = System.getProperty("line.separator");
   
 //@formatter:on
 
@@ -68,18 +71,25 @@ final class UnsafeUtil {
   static final long UNSAFE_COPY_THRESHOLD = 1L << 20; //2^20
 
   static {
-    try {
-      //should work across JVMs, e.g., with Android:
-      Constructor<Unsafe> unsafeConstructor = Unsafe.class.getDeclaredConstructor();
-      unsafeConstructor.setAccessible(true);
-      unsafe = unsafeConstructor.newInstance();
+      try {
+        //should work across JVMs, e.g., with Android:
+        Constructor<Unsafe> unsafeConstructor = Unsafe.class.getDeclaredConstructor();
+        unsafeConstructor.setAccessible(true);
+        unsafe = unsafeConstructor.newInstance();
 
-      // Alternative, but may not work across different JVMs.
-//    Field field = Unsafe.class.getDeclaredField("theUnsafe");
-//    field.setAccessible(true);
-//    unsafe = (Unsafe) field.get(null);
+        // Alternative, but may not work across different JVMs.
+//      Field field = Unsafe.class.getDeclaredField("theUnsafe");
+//      field.setAccessible(true);
+//      unsafe = (Unsafe) field.get(null);
 
-      //4 on 32-bits systems, 8 on 64-bit systems.  Not an indicator of compressed ref (Oop)
+      } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+          | InvocationTargetException | NoSuchMethodException e) {
+        e.printStackTrace();
+        throw new SketchesException("Unable to acquire Unsafe. ", e);
+      }
+
+      //4 on 32-bits systems and 64-bit systems < 32GB, otherwise 8.  
+      //This alone is not an indicator of compressed ref (Oop)
       ADDRESS_SIZE = unsafe.addressSize(); 
 
       ARRAY_BOOLEAN_BASE_OFFSET = unsafe.arrayBaseOffset(boolean[].class);
@@ -101,11 +111,6 @@ final class UnsafeUtil {
       ARRAY_FLOAT_INDEX_SCALE = unsafe.arrayIndexScale(float[].class);
       ARRAY_DOUBLE_INDEX_SCALE = unsafe.arrayIndexScale(double[].class);
       ARRAY_OBJECT_INDEX_SCALE = unsafe.arrayIndexScale(Object[].class);
-      
-    }
-    catch (Exception e) {
-      throw new RuntimeException("Unable to acquire Unsafe. ", e);
-    }
   }
 
   private UnsafeUtil() {}
@@ -119,7 +124,7 @@ final class UnsafeUtil {
    */
   static void assertBounds(final long reqOff, final long reqLen, final long allocSize) {
     assert ((reqOff | reqLen | (reqOff + reqLen) | (allocSize - (reqOff + reqLen))) >= 0) : 
-      "offset: "+ reqOff + ", reqLength: "+ reqLen+ ", size: "+allocSize;
+      "offset: " + reqOff + ", reqLength: " + reqLen + ", size: " + allocSize;
   }
 
   /**

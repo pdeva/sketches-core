@@ -10,21 +10,23 @@ import static com.yahoo.sketches.Util.toLog2;
 import static com.yahoo.sketches.frequencies.PreambleUtil.EMPTY_FLAG_MASK;
 import static com.yahoo.sketches.frequencies.PreambleUtil.SER_VER;
 import static com.yahoo.sketches.frequencies.PreambleUtil.extractActiveItems;
-import static com.yahoo.sketches.frequencies.PreambleUtil.extractLgCurMapSize;
-import static com.yahoo.sketches.frequencies.PreambleUtil.extractFlags;
 import static com.yahoo.sketches.frequencies.PreambleUtil.extractFamilyID;
-import static com.yahoo.sketches.frequencies.PreambleUtil.extractSerDeId;
+import static com.yahoo.sketches.frequencies.PreambleUtil.extractFlags;
+import static com.yahoo.sketches.frequencies.PreambleUtil.extractLgCurMapSize;
 import static com.yahoo.sketches.frequencies.PreambleUtil.extractLgMaxMapSize;
 import static com.yahoo.sketches.frequencies.PreambleUtil.extractPreLongs;
+import static com.yahoo.sketches.frequencies.PreambleUtil.extractSerDeId;
 import static com.yahoo.sketches.frequencies.PreambleUtil.extractSerVer;
 import static com.yahoo.sketches.frequencies.PreambleUtil.insertActiveItems;
-import static com.yahoo.sketches.frequencies.PreambleUtil.insertLgCurMapSize;
-import static com.yahoo.sketches.frequencies.PreambleUtil.insertFlags;
 import static com.yahoo.sketches.frequencies.PreambleUtil.insertFamilyID;
-import static com.yahoo.sketches.frequencies.PreambleUtil.insertSerDeId;
+import static com.yahoo.sketches.frequencies.PreambleUtil.insertFlags;
+import static com.yahoo.sketches.frequencies.PreambleUtil.insertLgCurMapSize;
 import static com.yahoo.sketches.frequencies.PreambleUtil.insertLgMaxMapSize;
 import static com.yahoo.sketches.frequencies.PreambleUtil.insertPreLongs;
+import static com.yahoo.sketches.frequencies.PreambleUtil.insertSerDeId;
 import static com.yahoo.sketches.frequencies.PreambleUtil.insertSerVer;
+import static com.yahoo.sketches.frequencies.Util.LG_MIN_MAP_SIZE;
+import static com.yahoo.sketches.frequencies.Util.SAMPLE_SIZE;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -134,21 +136,6 @@ import com.yahoo.sketches.memory.NativeMemory;
 public class ItemsSketch<T> {
 
   /**
-   * We start by allocating a small data structure capable of explicitly storing very small 
-   * streams and then growing it as the stream grows. The following constant controls the 
-   * size of the initial data structure.
-   */
-  private static final int LG_MIN_MAP_SIZE = 3; // This is somewhat arbitrary
-
-  /**
-   * This is a constant large enough that computing the median of SAMPLE_SIZE
-   * randomly selected entries from a list of numbers and outputting
-   * the empirical median will give a constant-factor approximation to the 
-   * true median with high probability
-   */
-  private static final int SAMPLE_SIZE = 1024;
-
-  /**
    * Log2 Maximum length of the arrays internal to the hash map supported by the data 
    * structure.
    */
@@ -225,7 +212,8 @@ public class ItemsSketch<T> {
    * @param serDe an instance of ArrayOfItemsSerDe
    * @return a sketch instance of this class.
    */
-  public static <T> ItemsSketch<T> getInstance(final Memory srcMem, final ArrayOfItemsSerDe<T> serDe) {
+  public static <T> ItemsSketch<T> getInstance(final Memory srcMem, 
+      final ArrayOfItemsSerDe<T> serDe) {
     final long pre0 = PreambleUtil.checkPreambleSize(srcMem); //make sure preamble will fit
     final int maxPreLongs = Family.FREQUENCY.getMaxPreLongs();
 
@@ -235,7 +223,7 @@ public class ItemsSketch<T> {
     final int lgMaxMapSize = extractLgMaxMapSize(pre0); //Byte 3
     final int lgCurMapSize = extractLgCurMapSize(pre0); //Byte 4
     final boolean empty = (extractFlags(pre0) & EMPTY_FLAG_MASK) != 0; //Byte 5
-    final int serDeId = extractSerDeId(pre0);       //Byte 6,7
+    final int serDeId = extractSerDeId(pre0);           //Byte 6,7
 
     // Checks
     final boolean preLongsEq1 = (preLongs == 1);        //Byte 0
@@ -246,21 +234,20 @@ public class ItemsSketch<T> {
     }
     if (serVer != SER_VER) {                            //Byte 1
       throw new SketchesArgumentException(
-          "Possible Corruption: Ser Ver must be "+SER_VER+": " + serVer);
+          "Possible Corruption: Ser Ver must be " + SER_VER + ": " + serVer);
     }
     final int actFamID = Family.FREQUENCY.getID();      //Byte 2
     if (familyID != actFamID) {
       throw new SketchesArgumentException(
-          "Possible Corruption: FamilyID must be "+actFamID+": " + familyID);
+          "Possible Corruption: FamilyID must be " + actFamID + ": " + familyID);
     }
     if (empty ^ preLongsEq1) {                          //Byte 5 and Byte 0
       throw new SketchesArgumentException(
           "Possible Corruption: (PreLongs == 1) ^ Empty == True.");
     }
-    if (serDeId != serDe.getId()) {                      //Byte 6,7
+    if (serDeId != serDe.getId()) {                     //Byte 6,7
       throw new SketchesArgumentException(
-          "Possible Corruption: SerDe ID incorrect: " + serDeId + " != " + 
-              serDe.getId());
+          "Possible Corruption: SerDe ID incorrect: " + serDeId + " != " + serDe.getId());
     }
 
     if (empty) {
@@ -322,7 +309,7 @@ public class ItemsSketch<T> {
     pre0 = insertLgMaxMapSize(lgMaxMapSize, pre0);          //Byte 3
     pre0 = insertLgCurMapSize(hashMap.getLgLength(), pre0); //Byte 4
     pre0 = empty ? insertFlags(EMPTY_FLAG_MASK, pre0) : insertFlags(0, pre0); //Byte 5
-    pre0 = insertSerDeId(serDe.getId(), pre0);            //Byte 6,7
+    pre0 = insertSerDeId(serDe.getId(), pre0);              //Byte 6,7
 
     if (empty) {
       mem.putLong(0, pre0);
@@ -446,7 +433,7 @@ public class ItemsSketch<T> {
    * Returns an array of Rows that include frequent items, estimates, upper and lower bounds
    * given an ErrorCondition. 
    * 
-   * The method first examines all active items in the sketch (items that have a counter).
+   * <p>The method first examines all active items in the sketch (items that have a counter).
    *  
    * <p>If <i>ErrorType = NO_FALSE_NEGATIVES</i>, this will include an item in the result 
    * list if getUpperBound(item) &gt; maxError. 
@@ -519,11 +506,53 @@ public class ItemsSketch<T> {
       return String.format(FMT,  est, ub, lb, item.toString());
     }
 
+    /**
+     * This compareTo is strictly limited to the Row.getEstimate() value and does not imply any 
+     * ordering whatsoever to the other elements of the row: item and upper and lower bounds. 
+     * Defined this way, this compareTo will be consistent with hashCode() and equals(Object).
+     * @param that the other row to compare to.
+     * @return a negative integer, zero, or a positive integer as this.getEstimate() is less than, 
+     * equal to, or greater than that.getEstimate().
+     */
     @Override
     public int compareTo(final Row<T> that) {
       return (this.est < that.est) ? -1 : (this.est > that.est) ? 1 : 0;
     }
-  }
+    
+    /**
+     * This hashCode is computed only from the Row.getEstimate() value. 
+     * Defined this way, this hashCode will be consistent with equals(Object):<br>
+     * If (x.equals(y)) implies: x.hashCode() == y.hashCode().<br>
+     * If (!x.equals(y)) does NOT imply: x.hashCode() != y.hashCode().
+     * @return the hashCode computed from getEstimate().
+     */
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + (int) (est ^ (est >>> 32));
+      return result;
+    }
+
+    /**
+     * This equals is computed only from the Row.getEstimate() value and does not imply equality 
+     * of the other items within the row: item and upper and lower bounds.
+     * Defined this way, this equals will be consistent with compareTo(Row).
+     * @param obj the other row to determine equality with.
+     * @return true if this.getEstimate() equals ((Row&lt;T&gt;)obj).getEstimate().
+     */
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if ( !(obj instanceof Row)) return false;
+      Row<T> that = (Row<T>) obj;
+      if (est != that.est) return false;
+      return true;
+    }
+    
+  } //End of class Row<T>
 
   Row<T>[] sortItems(final long threshold, final ErrorType errorType) {
     final ArrayList<Row<T>> rowList = new ArrayList<Row<T>>();
@@ -559,7 +588,8 @@ public class ItemsSketch<T> {
     });
     
     @SuppressWarnings("unchecked")
-    final Row<T>[] rowsArr = rowList.toArray((Row<T>[]) Array.newInstance(Row.class, rowList.size()));
+    final Row<T>[] rowsArr = 
+      rowList.toArray((Row<T>[]) Array.newInstance(Row.class, rowList.size()));
     return rowsArr;
   }
 

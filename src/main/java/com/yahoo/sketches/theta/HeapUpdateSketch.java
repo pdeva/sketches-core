@@ -5,6 +5,7 @@
 
 package com.yahoo.sketches.theta;
 
+import static com.yahoo.sketches.Util.MIN_LG_NOM_LONGS;
 import static com.yahoo.sketches.theta.PreambleUtil.EMPTY_FLAG_MASK;
 import static com.yahoo.sketches.theta.PreambleUtil.FAMILY_BYTE;
 import static com.yahoo.sketches.theta.PreambleUtil.FLAGS_BYTE;
@@ -17,11 +18,9 @@ import static com.yahoo.sketches.theta.PreambleUtil.SEED_HASH_SHORT;
 import static com.yahoo.sketches.theta.PreambleUtil.SER_VER;
 import static com.yahoo.sketches.theta.PreambleUtil.SER_VER_BYTE;
 import static com.yahoo.sketches.theta.PreambleUtil.THETA_LONG;
-import static com.yahoo.sketches.Util.MIN_LG_NOM_LONGS;
 
 import com.yahoo.sketches.ResizeFactor;
 import com.yahoo.sketches.Util;
-import com.yahoo.sketches.memory.Memory;
 import com.yahoo.sketches.memory.NativeMemory;
 
 /**
@@ -78,11 +77,6 @@ abstract class HeapUpdateSketch extends UpdateSketch {
   short getSeedHash() {
     return Util.computeSeedHash(getSeed());
   }
-
-  @Override
-  Memory getMemory() {
-    return null;
-  }
   
   byte[] toByteArray(int preLongs, byte family) {
     if (isDirty()) rebuild();
@@ -105,7 +99,7 @@ abstract class HeapUpdateSketch extends UpdateSketch {
     memOut.putLong(THETA_LONG, this.getThetaLong());
 
     //Flags: BigEnd=0, ReadOnly=0, Empty=X, compact=0, ordered=0
-    byte flags = this.isEmpty()? (byte) EMPTY_FLAG_MASK : 0;
+    byte flags = this.isEmpty() ? (byte) EMPTY_FLAG_MASK : 0;
     memOut.putByte(FLAGS_BYTE, flags);
     
     //Data

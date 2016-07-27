@@ -287,8 +287,8 @@ public class HeapDoublesSketchTest {
   
   @Test(expectedExceptions = SketchesArgumentException.class)
   public void checkConstructorException() {
-    @SuppressWarnings("unused")
     DoublesSketch qs = DoublesSketch.builder().build(0);
+    qs.getQuantile(0.5); //never executed
   }
   
   @Test(expectedExceptions = SketchesArgumentException.class)
@@ -436,10 +436,10 @@ public class HeapDoublesSketchTest {
   @Test
   public void checkToFromByteArray() {
     int k = DoublesSketch.DEFAULT_K;
-    int n = 1000;
+    int n = 1300; //generates a pattern of 5 = (101)
     DoublesSketch qs = buildQS(k,n);
     
-    byte[] byteArr = qs.toByteArray();
+    byte[] byteArr = qs.toByteArray(true);
     Memory mem = new NativeMemory(byteArr);
     DoublesSketch qs2 = DoublesSketch.heapify(mem);
     for (double f = 0.1; f < 0.95; f += 0.1) {
@@ -459,15 +459,20 @@ public class HeapDoublesSketchTest {
     assertEquals(qs2.getQuantile(0.0), Double.POSITIVE_INFINITY);
     assertEquals(qs2.getQuantile(1.0), Double.NEGATIVE_INFINITY);
     assertEquals(qs2.getQuantile(0.5), Double.NaN);
-    
+    double[] quantiles = qs2.getQuantiles(new double[] {0.0, 0.5, 1.0}); 
+    assertEquals(quantiles.length, 3);
+    assertEquals(quantiles[0], Double.POSITIVE_INFINITY);
+    assertEquals(quantiles[1], Double.NaN);
+    assertEquals(quantiles[2], Double.NEGATIVE_INFINITY);
+
     //println(qs1.toString(true, true));
   }
   
   @Test(expectedExceptions = SketchesArgumentException.class)
   public void checkMemTooSmall1() {
     Memory mem = new NativeMemory(new byte[7]);
-    @SuppressWarnings("unused")
     HeapDoublesSketch qs2 = HeapDoublesSketch.getInstance(mem);
+    qs2.getQuantile(0.5);
   }
   
   //Corruption tests
@@ -563,13 +568,13 @@ public class HeapDoublesSketchTest {
       directSketch.update (i);
     }
     HeapDoublesSketch downSketch = (HeapDoublesSketch)origSketch.downSample(smallK);
-    println ("\nOrig\n");
+    println (LS+"Orig+LS");
     String s = origSketch.toString(true, true);
     println(s);
-    println ("\nDown\n");
+    println (LS+"Down+LS");
     s = downSketch.toString(true, true);
     println(s);
-    println("\nDirect\n");
+    println(LS+"Direct"+LS);
     s = directSketch.toString(true, true);
     println(s);
   }
@@ -760,7 +765,7 @@ public class HeapDoublesSketchTest {
     long n = 10;
     Method privateMethod = DoublesAuxiliary.class.getDeclaredMethod("posOfPhi", double.class, long.class );
     privateMethod.setAccessible(true);
-    long returnValue = (long) privateMethod.invoke(null, new Double(1.0), new Long(10));
+    long returnValue = (long) privateMethod.invoke(null, Double.valueOf(1.0), Long.valueOf(10));
     //println("" + returnValue);
     assertEquals(returnValue, n-1);
   }
@@ -815,14 +820,15 @@ public class HeapDoublesSketchTest {
   public void checkPMFonEmpty() {
     DoublesSketch qsk = buildQS(32, 1001);
     double[] array = new double[0];
-    double[] qOut = qsk.getQuantiles(array); //check empty array
+    double[] qOut = qsk.getQuantiles(array);
+    assertEquals(qOut.length, 0);
     println("qOut: "+qOut.length);
     double[] cdfOut = qsk.getCDF(array);
     println("cdfOut: "+cdfOut.length);
     assertEquals(cdfOut[0], 1.0, 0.0);
     
   }
-  
+
   private static void checksForImproperK(int k) {
     String s = "Did not catch improper k: "+k;
     try {

@@ -5,12 +5,12 @@
 
 package com.yahoo.sketches.tuple;
 
+import static com.yahoo.sketches.Util.REBUILD_THRESHOLD;
+import static com.yahoo.sketches.Util.RESIZE_THRESHOLD;
+import static com.yahoo.sketches.Util.ceilingPowerOf2;
+
 import com.yahoo.sketches.QuickSelect;
 import com.yahoo.sketches.SketchesArgumentException;
-
-import static com.yahoo.sketches.Util.RESIZE_THRESHOLD;
-import static com.yahoo.sketches.Util.REBUILD_THRESHOLD;
-import static com.yahoo.sketches.Util.ceilingPowerOf2;
 
 /**
  * Top level class for hash table based implementations of tuple sketch of type
@@ -42,7 +42,6 @@ abstract class ArrayOfDoublesQuickSelectSketch extends ArrayOfDoublesUpdatableSk
 
   // these can be derived from other things, but are kept here for performance
   int rebuildThreshold_;
-  int mask_;
   int lgCurrentCapacity_;
 
   ArrayOfDoublesQuickSelectSketch(final int numValues, final long seed) {
@@ -50,19 +49,33 @@ abstract class ArrayOfDoublesQuickSelectSketch extends ArrayOfDoublesUpdatableSk
   }
 
   abstract void updateValues(int index, double[] values);
+  
   abstract void setNotEmpty();
+  
   abstract void setIsEmpty(boolean isEmpty);
+  
   abstract boolean isInSamplingMode();
+  
   abstract int getResizeFactor();
+  
   abstract int getCurrentCapacity();
+  
   abstract void rebuild(int newCapacity);
+  
   abstract long getKey(int index);
-  abstract void setKey(int index, long key);
+  
+  //abstract void setKey(int index, long key);
+  
   abstract void setValues(int index, double[] values);
+  
   abstract void incrementCount();
+  
   abstract void setThetaLong(long theta);
+  
   abstract int insertKey(long key);
+  
   abstract int findOrInsertKey(long key);
+  
   abstract double[] find(long key);
 
   @Override
@@ -74,12 +87,14 @@ abstract class ArrayOfDoublesQuickSelectSketch extends ArrayOfDoublesUpdatableSk
   }
 
   /**
-   * @param nomEntries Nominal number of entries. Forced to the nearest power of 2 greater than given value.
+   * @param nomEntries Nominal number of entries. Forced to the nearest power of 2 greater than 
+   * given value.
    * @param numValues Number of double values to keep for each key
    * @return maximum required storage bytes given nomEntries and numValues
    */
   static int getMaxBytes(final int nomEntries, final int numValues) {
-    return ENTRIES_START + (SIZE_OF_KEY_BYTES + SIZE_OF_VALUE_BYTES * numValues) * ceilingPowerOf2(nomEntries) * 2;
+    return ENTRIES_START 
+        + (SIZE_OF_KEY_BYTES + SIZE_OF_VALUE_BYTES * numValues) * ceilingPowerOf2(nomEntries) * 2;
   }
 
   // non-public methods below
@@ -130,7 +145,10 @@ abstract class ArrayOfDoublesQuickSelectSketch extends ArrayOfDoublesUpdatableSk
 
   @Override
   void insertOrIgnore(final long key, final double[] values) {
-    if (values.length != getNumValues()) throw new SketchesArgumentException("input array of values must have " + getNumValues() + " elements, but has " + values.length);
+    if (values.length != getNumValues()) {
+      throw new SketchesArgumentException("input array of values must have " + getNumValues() 
+        + " elements, but has " + values.length);
+    }
     setNotEmpty();
     if (key == 0 || key >= theta_) return;
     int index = findOrInsertKey(key);

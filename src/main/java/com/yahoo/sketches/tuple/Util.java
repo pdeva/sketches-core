@@ -10,17 +10,20 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.yahoo.sketches.SketchesArgumentException;
 
-class Util {
+final class Util {
   /**
   * Gets the starting power of 2 so that it is a proper sub-multiple of the target by resize ratio.
   * This version uses an integer to specify the lgResizeRatio.
   *
   * @param lgTarget Power of 2 of the target number
-  * @param lgResizeRatio Values 0 to 3 (0 - no resize (max size upfront), 1 - double, 2 - four times, 3 - 8 times)
+  * @param lgResizeRatio Values 0 to 3 (0 - no resize (max size upfront), 1 - double, 
+  * 2 - four times, 3 - 8 times)
   * @param lgMin Minimum starting power of 2
-  * @return The returning log2 size will be a proper sub-multiple of the final lgTarget by the lgResizeRatio
+  * @return The returning log2 size will be a proper sub-multiple of the final lgTarget by the 
+  * lgResizeRatio
   */
-  static final int startingSubMultiple(final int lgTarget, final int lgResizeRatio, final int lgMin) {
+  static final int startingSubMultiple(final int lgTarget, final int lgResizeRatio, 
+      final int lgMin) {
     int lgStart;
     if (lgResizeRatio > 0) {
       lgStart = (Math.abs(lgTarget - lgMin) % lgResizeRatio) + lgMin;
@@ -53,14 +56,18 @@ class Util {
     final short seedHash = (short)((hash(seedArr, 0L)[0]) & 0xFFFFL);
     if (seedHash == 0) {
       throw new SketchesArgumentException(
-          "The given seed: " + seed + " produced a seedHash of zero. " + 
-          "You must choose a different seed.");
+          "The given seed: " + seed + " produced a seedHash of zero. " 
+              + "You must choose a different seed.");
     }
     return seedHash; 
   }
   
   static final void checkSeedHashes(final short seedHashA, final short seedHashB) {
-    if (seedHashA != seedHashB) throw new SketchesArgumentException("Incompatible Seed Hashes. "+ seedHashA + ", " + seedHashB);
+    if (seedHashA != seedHashB) {
+      throw new SketchesArgumentException("Incompatible Seed Hashes. " + seedHashA + ", " 
+          + seedHashB);
+    }
+        
   }
 
 }

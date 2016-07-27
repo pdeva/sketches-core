@@ -67,7 +67,7 @@ import com.yahoo.sketches.memory.NativeMemory;
  * @author Lee Rhodes
  * @author Kevin Lang
  */
-class DirectQuickSelectSketch extends DirectUpdateSketch {
+final class DirectQuickSelectSketch extends DirectUpdateSketch {
   private static final double DQS_RESIZE_THRESHOLD  = 15.0 / 16.0; //tuned for space
   
   //These values may be accessed on every update, thus are kept on-heap for speed.
@@ -95,7 +95,8 @@ class DirectQuickSelectSketch extends DirectUpdateSketch {
    * 
    * @param lgNomLongs <a href="{@docRoot}/resources/dictionary.html#lgNomLongs">See lgNomLongs</a>.
    * @param seed <a href="{@docRoot}/resources/dictionary.html#seed">See Update Hash Seed</a>.
-   * @param p <a href="{@docRoot}/resources/dictionary.html#p">See Sampling Probability, <i>p</i></a>
+   * @param p 
+   * <a href="{@docRoot}/resources/dictionary.html#p">See Sampling Probability, <i>p</i></a>
    * @param rf Currently internally fixed at 2. Unless dstMem is not configured with a valid 
    * MemoryRequest, in which case the rf is effectively 1, which is no resizing at all and the 
    * dstMem must be large enough for a full sketch.
@@ -123,14 +124,14 @@ class DirectQuickSelectSketch extends DirectUpdateSketch {
     
     //Choose RF, minReqBytes, lgArrLongs. 
     int lgRF = rf.lg();
-    int lgArrLongs = (lgRF == 0)? lgNomLongs +1 : MIN_LG_ARR_LONGS;
+    int lgArrLongs = (lgRF == 0) ? lgNomLongs + 1 : MIN_LG_ARR_LONGS;
     int minReqBytes = PreambleUtil.getMemBytes(lgArrLongs, preambleLongs);
     
     //Make sure Memory is large enough
     long curMemCapBytes = dstMem.getCapacity();
     if (curMemCapBytes < minReqBytes) {
       throw new SketchesArgumentException(
-        "Memory capacity is too small: "+curMemCapBytes+" < "+minReqBytes);
+        "Memory capacity is too small: " + curMemCapBytes + " < " + minReqBytes);
     }
     int curCount = 0;
 //@formatter:off
@@ -156,7 +157,8 @@ class DirectQuickSelectSketch extends DirectUpdateSketch {
     //clear hash table area
     dstMem.clear(preambleLongs << 3, 8 << lgArrLongs); 
     
-    DirectQuickSelectSketch dqss = new DirectQuickSelectSketch(lgNomLongs, seed, p, rf, preambleLongs);
+    DirectQuickSelectSketch dqss = 
+        new DirectQuickSelectSketch(lgNomLongs, seed, p, rf, preambleLongs);
     dqss.lgArrLongs_ = lgArrLongs;
     dqss.hashTableThreshold_ = setHashTableThreshold(lgNomLongs, lgArrLongs);
     dqss.curCount_ = curCount;
@@ -193,20 +195,20 @@ class DirectQuickSelectSketch extends DirectUpdateSketch {
     
     if (serVer != SER_VER) {
       throw new SketchesArgumentException(
-          "Possible corruption: Invalid Serialization Version: "+serVer);
+          "Possible corruption: Invalid Serialization Version: " + serVer);
     }
     
     Family family = Family.idToFamily(familyID);
     if (family.equals(Family.UNION)) {
       if (preambleLongs != Family.UNION.getMinPreLongs()) {
         throw new SketchesArgumentException(
-            "Possible corruption: Invalid PreambleLongs value for UNION: " +preambleLongs);
+            "Possible corruption: Invalid PreambleLongs value for UNION: " + preambleLongs);
       }
     }
     else if (family.equals(Family.QUICKSELECT)) {
       if (preambleLongs != Family.QUICKSELECT.getMinPreLongs()) {
         throw new SketchesArgumentException(
-            "Possible corruption: Invalid PreambleLongs value for QUICKSELECT: " +preambleLongs);
+            "Possible corruption: Invalid PreambleLongs value for QUICKSELECT: " + preambleLongs);
       }
     } else {
       throw new SketchesArgumentException(
@@ -215,14 +217,15 @@ class DirectQuickSelectSketch extends DirectUpdateSketch {
     
     if (lgNomLongs < MIN_LG_NOM_LONGS) {
       throw new SketchesArgumentException(
-          "Possible corruption: Current Memory lgNomLongs < min required size: " + 
-              lgNomLongs + " < " + MIN_LG_NOM_LONGS);
+          "Possible corruption: Current Memory lgNomLongs < min required size: " 
+              + lgNomLongs + " < " + MIN_LG_NOM_LONGS);
     }
     
-    int flagsMask = ORDERED_FLAG_MASK | COMPACT_FLAG_MASK | READ_ONLY_FLAG_MASK | BIG_ENDIAN_FLAG_MASK;
+    int flagsMask = 
+        ORDERED_FLAG_MASK | COMPACT_FLAG_MASK | READ_ONLY_FLAG_MASK | BIG_ENDIAN_FLAG_MASK;
     if ((flags & flagsMask) > 0) {
       throw new SketchesArgumentException(
-          "Possible corruption: Input srcMem cannot be: big-endian, compact, ordered, or read-only");
+        "Possible corruption: Input srcMem cannot be: big-endian, compact, ordered, or read-only");
     }
     
     Util.checkSeedHashes(seedHash, Util.computeSeedHash(seed));
@@ -231,18 +234,19 @@ class DirectQuickSelectSketch extends DirectUpdateSketch {
     int minReqBytes = PreambleUtil.getMemBytes(lgArrLongs, preambleLongs);
     if (curCapBytes < minReqBytes) {
       throw new SketchesArgumentException(
-          "Possible corruption: Current Memory size < min required size: " + 
-              curCapBytes + " < " + minReqBytes);
+          "Possible corruption: Current Memory size < min required size: " 
+              + curCapBytes + " < " + minReqBytes);
     }
     
-    double theta = thetaLong/MAX_THETA_LONG_AS_DOUBLE;
+    double theta = thetaLong / MAX_THETA_LONG_AS_DOUBLE;
     if ((lgArrLongs <= lgNomLongs) && (theta < p) ) {
       throw new SketchesArgumentException(
-        "Possible corruption: Theta cannot be < p and lgArrLongs <= lgNomLongs. "+
-            lgArrLongs + " <= " + lgNomLongs + ", Theta: "+theta + ", p: " + p);
+        "Possible corruption: Theta cannot be < p and lgArrLongs <= lgNomLongs. " 
+            + lgArrLongs + " <= " + lgNomLongs + ", Theta: " + theta + ", p: " + p);
     }
     
-    DirectQuickSelectSketch dqss = new DirectQuickSelectSketch(lgNomLongs, seed, p, myRF, preambleLongs);
+    DirectQuickSelectSketch dqss = 
+        new DirectQuickSelectSketch(lgNomLongs, seed, p, myRF, preambleLongs);
     dqss.lgArrLongs_ = lgArrLongs;
     dqss.hashTableThreshold_ = setHashTableThreshold(lgNomLongs, lgArrLongs);
     dqss.curCount_ = curCount;
@@ -301,7 +305,7 @@ class DirectQuickSelectSketch extends DirectUpdateSketch {
     //lgArrLongs stays the same
     int arrLongs = 1 << getLgArrLongs();
     int preBytes = preambleLongs_ << 3;
-    mem_.clear(preBytes, arrLongs*8); //clear data array
+    mem_.clear(preBytes, arrLongs * 8); //clear data array
     //flags: bigEndian = readOnly = compact = ordered = false; empty = true.
     mem_.putByte(FLAGS_BYTE, (byte) EMPTY_FLAG_MASK);       //byte 5
     empty_ = true; 
@@ -321,7 +325,7 @@ class DirectQuickSelectSketch extends DirectUpdateSketch {
   long[] getCache() {
     long[] cacheArr = new long[1 << lgArrLongs_];
     Memory mem = new NativeMemory(cacheArr);
-    NativeMemory.copy(mem_, preambleLongs_ << 3, mem, 0, 8<< lgArrLongs_);
+    NativeMemory.copy(mem_, preambleLongs_ << 3, mem, 0, 8 << lgArrLongs_);
     return cacheArr;
   }
   
@@ -370,7 +374,8 @@ class DirectQuickSelectSketch extends DirectUpdateSketch {
       
       if (lgArrLongs_ > lgNomLongs_) { //at full size, rebuild
         //Assumes no dirty values, changes thetaLong_, curCount_
-        assert (lgArrLongs_ == lgNomLongs_ + 1) : "lgArr: " + lgArrLongs_ + ", lgNom: " + lgNomLongs_;
+        assert 
+          (lgArrLongs_ == lgNomLongs_ + 1) : "lgArr: " + lgArrLongs_ + ", lgNom: " + lgNomLongs_;
         quickSelectAndRebuild(mem_, preambleLongs_, lgNomLongs_, lgArrLongs_, curCount_);  //rebuild
         curCount_ = mem_.getInt(RETAINED_ENTRIES_INT);
         thetaLong_ = mem_.getLong(THETA_LONG);
@@ -379,7 +384,7 @@ class DirectQuickSelectSketch extends DirectUpdateSketch {
       else { //Not at full size, resize. Should not get here if lgRF = 0 and memCap is too small.
         int lgRF = getLgResizeFactor();
         int actLgRF = actLgResizeFactor(mem_.getCapacity(), lgArrLongs_, preambleLongs_, lgRF);
-        int tgtLgArrLongs = Math.min(lgArrLongs_ + actLgRF, lgNomLongs_+1);
+        int tgtLgArrLongs = Math.min(lgArrLongs_ + actLgRF, lgNomLongs_ + 1);
         if (actLgRF > 0) { //Expand in current Memory
           resize(mem_, preambleLongs_, lgArrLongs_, tgtLgArrLongs);
           //update locals
@@ -402,7 +407,8 @@ class DirectQuickSelectSketch extends DirectUpdateSketch {
           long newCap = dstMem.getCapacity();
           if (newCap < reqBytes) {
             memReq.free(dstMem);
-            throw new SketchesArgumentException("Requested memory not granted: "+newCap+" < "+reqBytes);
+            throw new SketchesArgumentException("Requested memory not granted: " + newCap + " < " 
+                + reqBytes);
           }
           moveAndResize(mem_, preambleLongs_, lgArrLongs_, dstMem, tgtLgArrLongs, thetaLong_);
           
@@ -426,6 +432,8 @@ class DirectQuickSelectSketch extends DirectUpdateSketch {
    * @return the hash table threshold
    */
   private static final int setHashTableThreshold(final int lgNomLongs, final int lgArrLongs) {
+    //FindBugs may complain if DQS_RESIZE_THRESHOLD == REBUILD_THRESHOLD, but this allows us
+    // to tune these constants for different sketches.
     double fraction = (lgArrLongs <= lgNomLongs) ? DQS_RESIZE_THRESHOLD : REBUILD_THRESHOLD;
     return (int) Math.floor(fraction * (1 << lgArrLongs));
   }

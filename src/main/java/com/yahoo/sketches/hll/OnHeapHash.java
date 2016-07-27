@@ -5,16 +5,16 @@
 
 package com.yahoo.sketches.hll;
 
+import java.util.Arrays;
+
 import com.yahoo.sketches.SketchesArgumentException;
 import com.yahoo.sketches.memory.Memory;
 import com.yahoo.sketches.memory.NativeMemory;
 
-import java.util.Arrays;
-
 /**
  * @author Kevin Lang
  */
-class OnHeapHash {
+final class OnHeapHash {
   private int[] fields_;
   private int mask;
   private int numElements;

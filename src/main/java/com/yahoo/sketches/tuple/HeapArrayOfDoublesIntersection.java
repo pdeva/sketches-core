@@ -9,7 +9,7 @@ package com.yahoo.sketches.tuple;
  * On-heap implementation of intersection set operation for tuple sketches of type
  * ArrayOfDoubles.
  */
-class HeapArrayOfDoublesIntersection extends ArrayOfDoublesIntersection {
+final class HeapArrayOfDoublesIntersection extends ArrayOfDoublesIntersection {
 
   /**
    * Creates an instance of a HeapArrayOfDoublesIntersection with a custom update seed
@@ -21,7 +21,8 @@ class HeapArrayOfDoublesIntersection extends ArrayOfDoublesIntersection {
   }
 
   @Override
-  protected ArrayOfDoublesQuickSelectSketch createSketch(final int size, final int numValues, final long seed) {
+  protected ArrayOfDoublesQuickSelectSketch createSketch(final int size, final int numValues, 
+      final long seed) {
     return new HeapArrayOfDoublesQuickSelectSketch(size, 0, 1f, numValues, seed);
   }
 

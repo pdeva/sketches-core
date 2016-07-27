@@ -29,18 +29,18 @@ import static java.lang.Math.min;
 import java.util.Arrays;
 
 import com.yahoo.sketches.Family;
-import com.yahoo.sketches.memory.Memory;
-import com.yahoo.sketches.memory.NativeMemory;
 import com.yahoo.sketches.HashOperations;
 import com.yahoo.sketches.SketchesArgumentException;
 import com.yahoo.sketches.SketchesStateException;
 import com.yahoo.sketches.Util;
+import com.yahoo.sketches.memory.Memory;
+import com.yahoo.sketches.memory.NativeMemory;
 
 /**
  * @author Lee Rhodes
  * @author Kevin Lang
  */
-class HeapIntersection extends SetOperation implements Intersection{
+final class HeapIntersection extends SetOperation implements Intersection {
   private final short seedHash_;
   //Note: Intersection does not use lgNomLongs or k, per se.
   private int lgArrLongs_;
@@ -57,7 +57,7 @@ class HeapIntersection extends SetOperation implements Intersection{
    */
   HeapIntersection(long seed) {
     seedHash_ = computeSeedHash(seed);
-    empty_ = false;
+    empty_ = false;  //A virgin intersection represents the Universal Set so empty is FALSE!
     curCount_ = -1;  //Universal Set is true
     thetaLong_ = Long.MAX_VALUE;
     lgArrLongs_ = 0;
@@ -78,10 +78,12 @@ class HeapIntersection extends SetOperation implements Intersection{
     long pre0 = preArr[0];
     int preambleLongs = extractPreLongs(pre0);
     if (preambleLongs != CONST_PREAMBLE_LONGS) {
-      throw new SketchesArgumentException("PreambleLongs must = 3.");
+      throw new SketchesArgumentException("PreambleLongs must equal " + CONST_PREAMBLE_LONGS);
     }
     int serVer = extractSerVer(pre0);
-    if (serVer != 3) throw new SketchesArgumentException("Ser Version must = 3");
+    if (serVer != SER_VER) {
+      throw new SketchesArgumentException("Ser Version must equal " + SER_VER);
+    }
     int famID = extractFamilyID(pre0);
     Family.INTERSECTION.checkFamilyID(famID);
     //Note: Intersection does not use lgNomLongs or k, per se.
@@ -100,7 +102,7 @@ class HeapIntersection extends SetOperation implements Intersection{
     if (empty_) {
       if (curCount_ != 0) {
         throw new SketchesArgumentException(
-            "srcMem empty state inconsistent with curCount: "+empty_+","+curCount_);
+            "srcMem empty state inconsistent with curCount: " + empty_ + "," + curCount_);
       }
       //empty = true AND curCount_ = 0: OK
     }
@@ -206,7 +208,7 @@ class HeapIntersection extends SetOperation implements Intersection{
   @Override
   public byte[] toByteArray() {
     int preBytes = CONST_PREAMBLE_LONGS << 3;
-    int dataBytes = (curCount_ > 0)? 8 << lgArrLongs_ : 0;
+    int dataBytes = (curCount_ > 0) ? 8 << lgArrLongs_ : 0;
     byte[] byteArrOut = new byte[preBytes + dataBytes];
     NativeMemory memOut = new NativeMemory(byteArrOut);
     
@@ -300,11 +302,11 @@ class HeapIntersection extends SetOperation implements Intersection{
       long hashIn = arr[i];
       if (HashOperations.continueCondition(thetaLong_, hashIn)) continue;
       // opportunity to use faster unconditional insert
-      tmpCnt += 
-          HashOperations.hashSearchOrInsert(hashTable_, lgArrLongs_, hashIn) < 0 ? 1 : 0;
+      tmpCnt += HashOperations.hashSearchOrInsert(hashTable_, lgArrLongs_, hashIn) < 0 ? 1 : 0;
     }
     if (tmpCnt != count) {
-      throw new SketchesArgumentException("Count Check Exception: got: "+tmpCnt+", expected: "+count);
+      throw new SketchesArgumentException("Count Check Exception: got: " + tmpCnt 
+          + ", expected: " + count);
     }
   }
   

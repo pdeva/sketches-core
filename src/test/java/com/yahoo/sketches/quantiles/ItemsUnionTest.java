@@ -17,11 +17,6 @@ import com.yahoo.sketches.memory.Memory;
 import com.yahoo.sketches.memory.NativeMemory;
 
 public class ItemsUnionTest {
-
-  public static void main(String[] args) {
-    ItemsUnionTest test = new ItemsUnionTest();
-    test.nullAndEmpty();
-  }
   
   @Test
   public void nullAndEmpty() {
@@ -105,17 +100,18 @@ public class ItemsUnionTest {
     Assert.assertEquals(result.getMaxValue(), Integer.valueOf(1));
   }
 
-  @SuppressWarnings("unused")
   @Test
   public void basedOnSketch() {
     Comparator<String> comp = Comparator.naturalOrder();
     ArrayOfStringsSerDe serDe = new ArrayOfStringsSerDe();
     ItemsSketch<String> sketch = ItemsSketch.getInstance(comp);
     ItemsUnion<String> union = ItemsUnion.getInstance(sketch);
+    union.reset();
     byte[] byteArr = sketch.toByteArray(serDe);
     Memory mem = new NativeMemory(byteArr);
     union = ItemsUnion.getInstance(mem, comp, serDe);
     Assert.assertEquals(byteArr.length, 8);
+    union.reset();
   }
   
   @Test
@@ -145,7 +141,7 @@ public class ItemsUnionTest {
     ItemsSketch<Long> sketch2 = ItemsSketch.getInstance(Comparator.naturalOrder());
     for (int i = 2001; i <= 3000; i++) sketch2.update((long) i);
     ArrayOfItemsSerDe<Long> serDe = new ArrayOfLongsSerDe();
-    union.update(new NativeMemory(sketch2.toByteArray(serDe)), Comparator.naturalOrder(), serDe);
+    union.update(new NativeMemory(sketch2.toByteArray(serDe)), serDe);
     result = union.getResultAndReset();
     Assert.assertEquals(result.getN(), 3000);
     Assert.assertEquals(result.getMinValue(), Long.valueOf(1));
@@ -187,7 +183,7 @@ public class ItemsUnionTest {
     ItemsSketch<Long> sketch2 = ItemsSketch.getInstance(128, Comparator.naturalOrder());
     for (int i = 20001; i <= 30000; i++) sketch2.update((long) i);
     ArrayOfItemsSerDe<Long> serDe = new ArrayOfLongsSerDe();
-    union.update(new NativeMemory(sketch2.toByteArray(serDe)), Comparator.naturalOrder(), serDe);
+    union.update(new NativeMemory(sketch2.toByteArray(serDe)), serDe);
     result = union.getResultAndReset();
     Assert.assertEquals(result.getK(), 128);
     Assert.assertEquals(result.getN(), 30000);
@@ -201,6 +197,28 @@ public class ItemsUnionTest {
     Assert.assertNull(result.getMaxValue());
   }
 
+  @Test
+  public void differentLargerK() {
+    ItemsUnion<Long> union = ItemsUnion.getInstance(128, Comparator.naturalOrder());
+    ItemsSketch<Long> sketch1 = ItemsSketch.getInstance(256, Comparator.naturalOrder());
+    union.update(sketch1);
+    Assert.assertEquals(union.getResult().getK(), 128);
+    sketch1.update(1L);
+    union.update(sketch1);
+    Assert.assertEquals(union.getResult().getK(), 128);
+  }
+  
+  @Test
+  public void differentSmallerK() {
+    ItemsUnion<Long> union = ItemsUnion.getInstance(128, Comparator.naturalOrder());
+    ItemsSketch<Long> sketch1 = ItemsSketch.getInstance(64, Comparator.naturalOrder());
+    union.update(sketch1);
+    Assert.assertEquals(union.getResult().getK(), 64);
+    sketch1.update(1L);
+    union.update(sketch1);
+    Assert.assertEquals(union.getResult().getK(), 64);
+  }
+  
   @Test
   public void toStringCrudeCheck() {
     ItemsUnion<String> union = ItemsUnion.getInstance(128, Comparator.naturalOrder());

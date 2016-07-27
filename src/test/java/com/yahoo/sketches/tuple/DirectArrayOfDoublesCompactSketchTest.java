@@ -88,13 +88,12 @@ public class DirectArrayOfDoublesCompactSketchTest {
     Assert.assertEquals(sketch2.getThetaLong(), sketch1.getThetaLong());
   }
 
-  @Test(expectedExceptions = RuntimeException.class)
+  @Test(expectedExceptions = SketchesArgumentException.class)
   public void deserializeWithWrongSeed() {
     ArrayOfDoublesUpdatableSketch us = new ArrayOfDoublesUpdatableSketchBuilder().setMemory(new NativeMemory(new byte[1000000])).build();
     for (int i = 0; i < 8192; i++) us.update(i, new double[] {1.0});
     ArrayOfDoublesCompactSketch sketch1 = us.compact(new NativeMemory(new byte[1000000]));
-    @SuppressWarnings("unused")
-    ArrayOfDoublesSketch sketch2 = ArrayOfDoublesSketches.wrapSketch(new NativeMemory(sketch1.toByteArray()), 123);
+    ArrayOfDoublesSketches.wrapSketch(new NativeMemory(sketch1.toByteArray()), 123);
   }
 
   @Test(expectedExceptions = SketchesArgumentException.class)
